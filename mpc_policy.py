@@ -13,6 +13,9 @@ class MPCPolicy(AlgoBase):
         self,
         *,
         mpc_model,
+        noise,
+        min_actions,
+        max_actions,
         action_scaler: ActionScalerArg = None,
         **kwargs: Any,
     ):
@@ -26,6 +29,9 @@ class MPCPolicy(AlgoBase):
             kwargs=kwargs,
         )
         self.mpc_model = mpc_model
+        self.noise = noise
+        self.min_actions = min_actions
+        self.max_actions = max_actions
         self._action_size = 1
         self._impl = None
 
@@ -40,6 +46,9 @@ class MPCPolicy(AlgoBase):
     def sample_action(self, x: Union[np.ndarray, List[Any]]) -> np.ndarray:
         x = np.asarray(x)
         action = self.mpc_model.make_step(x)
+        if self.noise > 0:
+            random_action = [np.random.random()*(a_max-a_min) + a_min for a_min, a_max in zip(self.min_actions, self.max_actions)]
+            action = np.array([self.noise*r_a+(1.0-self.noise)*a for r_a, a in zip(random_action, action)])
         return action
 
     def predict_value(

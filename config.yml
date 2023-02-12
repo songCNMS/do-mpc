@@ -61,16 +61,16 @@ estimator:
   - parameters:
     - estimator related paramaters
 
-observation_scaler:
+observation_scaler: refer to d3rlpy.preprocessing.scalers.Scaler
   - name
   - parameters
 
 
-action_scaler:
+action_scaler: refer to d3rlpy.preprocessing.action_scalers.ActionScaler
   - name
   - parameters
 
 
-reward_scaler:
+reward_scaler: refer to d3rlpy.preprocessing.reward_scalers.RewardScaler
   - name
   - parameters

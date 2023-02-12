@@ -24,31 +24,30 @@ from examples.batch_reactor.template_simulator import template_simulator
 
 class BatchReactorEnv(gym.Env):
     def __init__(self,
-                 config,
                  model, 
                  simulator, 
                  estimator,
+                 min_observation,
+                 max_observation,
+                 min_actions,
+                 max_actions,
                  observation_scaler=None,
                  action_scaler=None,
                  reward_scaler=None,
                  steady_observation=None):
-        self.config = config
         self.model = model # model defines ODE/PDE of the dynamics
         self.simulator = simulator # taking model as an input, simulate its execution given the current state and controls
         self.estimator = estimator # state feature estimator, in case state is not fully observable, currently, simply return state of the simulator
         self.action_dim = len(self.simulator.u0.keys())
         self.observation_dim = len(self.simulator.x0.keys())
-        # All scalers are wrapper of the following scaler in sklearn:
-        # None - No scaler
-        # sklearn.preprocessing.MinMaxScaler
-        # sklearn.preprocessing.StandardScaler
+        # All scalers are those defined in d3rlpy:
         self.action_scaler = action_scaler
         self.reward_scaler = reward_scaler
         self.observation_scaler = observation_scaler
         # A steady observation specifies the ideal state that the system should stay close to
         self.steady_observation = steady_observation
-        self.min_observation, self.max_observation = self.observation_scaler.min_values, self.observation_scaler.max_values
-        self.min_actions, self.max_actions = self.action_scaler.min_values, self.action_scaler.max_values
+        self.min_observation, self.max_observation = min_observation, max_observation
+        self.min_actions, self.max_actions = min_actions, max_actions
         if self.model.model_type == "discrete":
                 self.action_space = gym.spaces.Discrete(self.action_dim)
         else:
