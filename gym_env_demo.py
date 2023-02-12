@@ -16,39 +16,6 @@ from examples.batch_reactor.template_model import template_model
 from examples.batch_reactor.template_mpc import template_mpc
 from examples.batch_reactor.template_simulator import template_simulator
 
-""" User settings: """
-show_animation = False
-store_results = False
-
-"""
-Get configured do-mpc modules:
-"""
-
-model = template_model()
-mpc = template_mpc(model)
-simulator = template_simulator(model)
-estimator = do_mpc.estimator.StateFeedback(model)
-
-"""
-Set initial state
-"""
-
-X_s_0 = 1.0 # This is the initial concentration inside the tank [mol/l]
-S_s_0 = 0.5 # This is the controlled variable [mol/l]
-P_s_0 = 0.0 #[C]
-V_s_0 = 120.0 #[C]
-x0 = np.array([X_s_0, S_s_0, P_s_0, V_s_0])
-
-mpc.x0 = x0
-simulator.x0 = x0
-estimator.x0 = x0
-
-mpc.set_initial_guess()
-for k in range(150):
-    u0 = mpc.make_step(x0)
-    y_next = simulator.make_step(u0)
-    x0 = estimator.make_step(y_next)
-
 
 # Reward Function
 # 1. distance between current state and steady state
@@ -56,23 +23,28 @@ for k in range(150):
 # 3. distance between current action and the previous action
 
 class BatchReactorEnv(gym.Env):
-    def __init__(self, 
+    def __init__(self,
+                 config,
                  model, 
                  simulator, 
                  estimator,
+                 observation_scaler=None,
+                 action_scaler=None,
+                 reward_scaler=None,
                  steady_observation=None):
+        self.config = config
         self.model = model # model defines ODE/PDE of the dynamics
         self.simulator = simulator # taking model as an input, simulate its execution given the current state and controls
         self.estimator = estimator # state feature estimator, in case state is not fully observable, currently, simply return state of the simulator
         self.action_dim = len(self.simulator.u0.keys())
         self.observation_dim = len(self.simulator.x0.keys())
-        # All scalers are one of the following:
+        # All scalers are wrapper of the following scaler in sklearn:
         # None - No scaler
         # sklearn.preprocessing.MinMaxScaler
         # sklearn.preprocessing.StandardScaler
-        self.action_scaler = None
-        self.reward_scaler = None
-        self.observation_scaler = None
+        self.action_scaler = action_scaler
+        self.reward_scaler = reward_scaler
+        self.observation_scaler = observation_scaler
         # A steady observation specifies the ideal state that the system should stay close to
         self.steady_observation = steady_observation
         self.min_observation, self.max_observation = self.observation_scaler.min_values, self.observation_scaler.max_values
@@ -86,7 +58,9 @@ class BatchReactorEnv(gym.Env):
         self.episode_len = 50
             
     def get_reward(self, state, action):
-        return 0.0
+        reward = self.simulator.x["P_x"]
+        if self.reward_scaler is not None: reward = self.reward_scaler.transform(reward)
+        return reward
 
     def step(self, action):
         if self.action_scaler is not None: action = self.action_scaler.inverse_transform(action)
@@ -106,3 +80,36 @@ class BatchReactorEnv(gym.Env):
         self.estimator.x0 = init_state
         self.state = init_state
         return self.state
+
+
+if __name__ == '__main__':
+
+    """ User settings: """
+    show_animation = False
+    store_results = False
+    """
+    Get configured do-mpc modules:
+    """
+    model = template_model()
+    mpc = template_mpc(model)
+    simulator = template_simulator(model)
+    estimator = do_mpc.estimator.StateFeedback(model)
+    """
+    Set initial state
+    """
+
+    X_s_0 = 1.0 # This is the initial concentration inside the tank [mol/l]
+    S_s_0 = 0.5 # This is the controlled variable [mol/l]
+    P_s_0 = 0.0 #[C]
+    V_s_0 = 120.0 #[C]
+    x0 = np.array([X_s_0, S_s_0, P_s_0, V_s_0])
+
+    mpc.x0 = x0
+    simulator.x0 = x0
+    estimator.x0 = x0
+
+    mpc.set_initial_guess()
+    for k in range(150):
+        u0 = mpc.make_step(x0)
+        y_next = simulator.make_step(u0)
+        x0 = estimator.make_step(y_next)
