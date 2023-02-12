@@ -10,3 +10,10 @@ numpy
 matplotlib
 recommonmark
 scipy
+gym
+scikit-learn
+pandas
+torch
+torchvision
+torchaudio
+d3rlpy
