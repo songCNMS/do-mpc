@@ -1,4 +1,4 @@
-description: SMPL Trainning
+description: RL4Con Trainning
 
 target:
   service: sing
@@ -37,14 +37,24 @@ jobs:
 - name: train_MOPO
   sku: G1
   command:
-  - python rl_training.py --algo MOPO --amlt
+  - python rl_trainning.py --algo MOPO --amlt
 
 - name: train_CQL
   sku: G1
   command:
-  - python rl_training.py --algo CQL --amlt
+  - python rl_trainning.py --algo CQL --amlt
 
 - name: train_TD3PlusBC
   sku: G1
   command:
-  - python rl_training.py --algo TD3PlusBC --amlt
+  - python rl_trainning.py --algo TD3PlusBC --amlt
+
+- name: train_PLASWithPerturbation
+  sku: G1
+  command:
+  - python rl_trainning.py --algo PLASWithPerturbation --amlt
+
+- name: train_SAC
+  sku: G1
+  command:
+  - python rl_trainning.py --algo SAC --amlt
