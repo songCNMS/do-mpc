@@ -17,7 +17,7 @@ from examples.batch_reactor.template_model import template_model
 from examples.batch_reactor.template_mpc import template_mpc
 from examples.batch_reactor.template_simulator import template_simulator
 
-from gym_env_demo import get_env
+from gym_env_wrapper import get_env
 from mpc_policy import get_mpc_controller
 
 dir_loc = os.path.dirname(os.path.relpath(__file__))
