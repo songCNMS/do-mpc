@@ -34,7 +34,7 @@ if __name__ == '__main__':
     dataset_dir = os.path.join(data_loc, 'datasets')
 
     env = get_env()
-    policy = get_mpc_controller(env, noise=0.1)
+    policy = get_mpc_controller(env, noise=0.2)
     
     num_steps = args.steps
     # prepare experience replay buffer

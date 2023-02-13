@@ -49,17 +49,19 @@ class MPCPolicy(AlgoBase):
         # Create the in-memory "file"
         action_list = []
         for obs in x:
-            try:
-                save_stdout = sys.stdout
-                sys.stdout = open('.trash.log', 'w')
-                ori_action = self.mpc_model.make_step(obs)
-                action = ori_action.flatten()
-            finally:
-                sys.stdout = save_stdout
-            
-            if self.noise > 0:
-                random_action = [np.random.random()*(a_max-a_min) + a_min for a_min, a_max in zip(self.min_actions, self.max_actions)]
-                action = np.array([self.noise*r_a+(1.0-self.noise)*a for r_a, a in zip(random_action, action)])
+            if self.noise >= 1.0:
+                action = [np.random.random()*(a_max-a_min) + a_min for a_min, a_max in zip(self.min_actions, self.max_actions)]
+            else:
+                try:
+                    save_stdout = sys.stdout
+                    sys.stdout = open('.trash.log', 'w')
+                    ori_action = self.mpc_model.make_step(obs)
+                    action = ori_action.flatten()
+                finally:
+                    sys.stdout = save_stdout
+                if self.noise > 0:
+                    random_action = [np.random.random()*(a_max-a_min) + a_min for a_min, a_max in zip(self.min_actions, self.max_actions)]
+                    action = np.array([self.noise*r_a+(1.0-self.noise)*a for r_a, a in zip(random_action, action)])
             action_list.append(action)
         return np.asarray(action_list)
 
