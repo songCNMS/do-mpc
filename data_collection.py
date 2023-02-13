@@ -28,6 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument("--steps", type=int, help='total samples', default="1000")
 
+
 if __name__ == '__main__':
     args = parser.parse_args()
     data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc

@@ -1,0 +1,50 @@
+description: SMPL Trainning
+
+target:
+  service: sing
+  name: msrresrchvc
+  vc: gcr-singularity-resrch
+  # service: amlk8s
+  # name: ms-shared
+  # vc: MS-Shared
+  # run "amlt target list amlk8s" to list the names of available AMLK8s targets
+  # name: msrresrchvc
+  # vc: gcr-singularity-resrch
+
+environment:
+  image: smpl:v1
+  registry: resrchvc4cr.azurecr.io # any public registry can be specified here
+  username: resrchvc4cr
+  setup:
+    - apt-get update
+    - pip install casadi
+    - pip install mpctools
+    - pip install -r requirements.txt
+    
+
+code:
+  # local directory of the code. this will be uploaded to the server.
+  # $CONFIG_DIR is expanded to the directory of this config file
+  local_dir: $CONFIG_DIR/
+
+data:
+  local_dir: $CONFIG_DIR/
+  remote_dir: rl4con/v1/
+
+
+jobs:
+
+- name: train_MOPO
+  sku: G1
+  command:
+  - python rl_training.py --algo MOPO --amlt
+
+- name: train_CQL
+  sku: G1
+  command:
+  - python rl_training.py --algo CQL --amlt
+
+- name: train_TD3PlusBC
+  sku: G1
+  command:
+  - python rl_training.py --algo TD3PlusBC --amlt

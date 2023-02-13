@@ -1,3 +1,6 @@
+# A template to be refined
+# important packages: do-mpc, d3rlpy, smpl
+
 model:
   - model_type: continuous/discrete
   - variables
