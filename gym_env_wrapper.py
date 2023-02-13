@@ -61,8 +61,8 @@ class BatchReactorEnv(gym.Env):
         self.cur_step = 0
         self.episode_len = 100
         self.error_reward = -1000.0
-        # self.action_space.np_random.seed(seed)
-        # self.observation_space.np_random.seed(seed)
+        self.action_space.seed(seed)
+        self.observation_space.seed(seed)
         
             
     def get_reward(self, state, state_next, action):
@@ -88,7 +88,8 @@ class BatchReactorEnv(gym.Env):
 
     def reset(self, init_state=None, seed=None):
         if seed is not None:
-            np.random.seed(seed)
+            self.action_space.seed(seed)
+            self.observation_space.seed(seed)
         if init_state is None: init_state = self.observation_space.sample()
         self.simulator.reset_history()
         self.simulator.x0 = init_state

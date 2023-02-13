@@ -76,13 +76,13 @@ class MPCPolicy(AlgoBase):
     
     
     
-def get_mpc_controller(env):
+def get_mpc_controller(env, noise=0.0):
     mpc = template_mpc(env.model)
     mpc.x0 = env.state
     mpc.set_initial_guess()
     
     policy = MPCPolicy(mpc_model=mpc, 
-                       noise=0.1, 
+                       noise=noise, 
                        min_actions=env.min_actions, 
                        max_actions=env.max_actions)
     return policy

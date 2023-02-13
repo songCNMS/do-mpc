@@ -65,7 +65,6 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
         os.makedirs(plot_dir, exist_ok=True)
     initial_states = []
     # seeds = list(range(num_episodes))
-    for seed in seeds: initial_states.append(env.reset(seed=seed))
     
     observations_list = [[] for _ in range(len(algorithms))] 
     actions_list = [[] for _ in range(len(algorithms))]
@@ -75,6 +74,8 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
         d3rlpy.seed(seed)
         np.random.seed(seed)
         random.seed(seed)
+        init_obs = env.reset(seed=seed)
+        initial_states.append(init_obs)
         for n_algo in range(len(algorithms)):
             algo, algo_name = algorithms[n_algo]
             algo_observes = []
