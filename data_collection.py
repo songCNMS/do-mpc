@@ -26,7 +26,7 @@ dir_loc = os.path.dirname(os.path.relpath(__file__))
 import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
-parser.add_argument("--steps", type=int, help='total samples', default="1000")
+parser.add_argument("--num_episodes", type=int, help='total samples', default="1000")
 
 
 if __name__ == '__main__':
@@ -35,18 +35,18 @@ if __name__ == '__main__':
     dataset_dir = os.path.join(data_loc, 'datasets')
 
     env = get_env()
-    policy = get_mpc_controller(env, noise=0.2)
-    
-    num_steps = args.steps
-    # prepare experience replay buffer
-    buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=num_steps, env=env)
-
-    # start data collection
-    policy.collect(env, buffer, n_steps=num_steps)
-
-    # export as MDPDataset
-    dataset = buffer.to_mdp_dataset()
-
-    # save MDPDataset
+    episodes_per_batch = 100
+    num_episodes = args.num_episodes
     os.makedirs(dataset_dir, exist_ok=True)
-    dataset.dump(f"{dataset_dir}/mpc_policy_batch_reactor_dataset_{num_steps}.h5")
+    for batch_idx in range(0, num_episodes, episodes_per_batch):
+        env.reset()
+        noise = np.random.choice([0.1,0.2,0.3,0.4,0.5])
+        policy = get_mpc_controller(env, noise=noise)
+        # prepare experience replay buffer
+        buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=episodes_per_batch*env.episode_len, env=env)
+        # start data collection
+        policy.collect(env, buffer, n_steps=episodes_per_batch*env.episode_len)
+        # export as MDPDataset
+        dataset = buffer.to_mdp_dataset()
+        # save MDPDataset
+        dataset.dump(f"{dataset_dir}/mpc_policy_batch_reactor_dataset_{noise}_{batch_idx}.h5")

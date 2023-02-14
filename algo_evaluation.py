@@ -16,7 +16,7 @@ import os
 import sys
 import torch
 from gym_env_wrapper import get_env
-from mpc_policy import get_mpc_controller
+from mpc_policy import get_mpc_controller, MPCPolicy
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
@@ -63,8 +63,6 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
                         plot_dir='./plt_results'):
     if plot_dir is not None:
         os.makedirs(plot_dir, exist_ok=True)
-    initial_states = []
-    # seeds = list(range(num_episodes))
     
     observations_list = [[] for _ in range(len(algorithms))] 
     actions_list = [[] for _ in range(len(algorithms))]
@@ -75,13 +73,15 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
         np.random.seed(seed)
         random.seed(seed)
         init_obs = env.reset(seed=seed)
-        initial_states.append(init_obs)
         for n_algo in range(len(algorithms)):
             algo, algo_name = algorithms[n_algo]
             algo_observes = []
             algo_actions = []
             algo_rewards = []  # list, for this algorithm, reawards of this trajectory.
-            init_obs = env.reset(seed=seed)
+            init_obs = env.reset(init_obs=init_obs, seed=seed)
+            if isinstance(algo, MPCPolicy):
+                algo.mpc_model.x0 = env.state
+                algo.mpc_model.set_initial_guess()
             o = [init_obs]
             done = False
             while not done:
@@ -107,12 +107,12 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
                     alpha = 1 * (0.7 ** (len(algorithms) - 1 - n_algo))
                     _, algo_name = algorithms[n_algo]
                     plt.plot(np.array(observations_list[n_algo][-1])[:, n_o], label=algo_name, alpha=alpha)
-                plt.plot([initial_states[n_epi][n_o] for _ in range(env.episode_len)], linestyle="--",
+                plt.plot([init_obs[n_o] for _ in range(env.episode_len)], linestyle="--",
                             label=f"initial_{o_name}")
                 plt.plot([env.steady_observation[n_o] for _ in range(env.episode_len)], linestyle="-.",
                             label=f"steady_{o_name}")
                 plt.xticks(np.arange(1, env.episode_len + 2, 1))
-                plt.annotate(str(initial_states[n_epi][n_o]), xy=(0, initial_states[n_epi][n_o]))
+                plt.annotate(str(init_obs[n_o]), xy=(0, init_obs[n_o]))
                 plt.annotate(str(env.steady_observation[n_o]), xy=(0, env.steady_observation[n_o]))
                 plt.legend()
                 if plot_dir is not None:
