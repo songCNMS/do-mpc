@@ -78,7 +78,7 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
             algo_observes = []
             algo_actions = []
             algo_rewards = []  # list, for this algorithm, reawards of this trajectory.
-            init_obs = env.reset(init_obs=init_obs, seed=seed)
+            init_obs = env.reset(init_state=init_obs, seed=seed)
             if isinstance(algo, MPCPolicy):
                 algo.mpc_model.x0 = env.state
                 algo.mpc_model.set_initial_guess()

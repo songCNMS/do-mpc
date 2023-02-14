@@ -103,7 +103,14 @@ if __name__ == "__main__":
         
         env = get_env()
         if not online_training:
-            dataset = d3rlpy.dataset.MDPDataset.load(training_dataset_loc)
+            dataset = None
+            for file_loc in os.listdir(training_dataset_loc):
+                data_loc = os.path.join(training_dataset_loc, file_loc)
+                print("loading data in", data_loc)  
+                _dataset = d3rlpy.dataset.MDPDataset.load(data_loc)
+                if dataset is None: dataset = _dataset
+                else: dataset.extend(_dataset)
+            assert dataset is not None, "trainning data is empty"
             eval_dataset = d3rlpy.dataset.MDPDataset.load(eval_dataset_loc)
             feeded_episodes = dataset.episodes
             eval_feeded_episodes = eval_dataset.episodes

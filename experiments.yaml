@@ -28,8 +28,8 @@ evaluate_on_environment: True
 default_loc: "d3rlpy_logs/"
 plt_dir: "plt_results"
 dataset_location: datasets # for dataset generation
-training_dataset_loc: 'datasets/mpc_policy_batch_reactor_dataset_100000.h5'
-eval_dataset_loc: 'datasets/mpc_policy_batch_reactor_dataset_100000.h5'
+training_dataset_loc: 'datasets/'
+eval_dataset_loc: 'datasets/mpc_policy_batch_reactor_dataset_10000.h5'
 
 # env specific configs
 reward_on_steady: True

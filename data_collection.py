@@ -27,7 +27,10 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument("--num_episodes", type=int, help='total samples', default="1000")
+parser.add_argument("--seed", type=int, help='seed', default="13")
 
+
+import time
 
 if __name__ == '__main__':
     args = parser.parse_args()
@@ -35,12 +38,13 @@ if __name__ == '__main__':
     dataset_dir = os.path.join(data_loc, 'datasets')
 
     env = get_env()
-    episodes_per_batch = 100
+    episodes_per_batch = 10
     num_episodes = args.num_episodes
     os.makedirs(dataset_dir, exist_ok=True)
+    rng = np.random.default_rng(args.seed)
     for batch_idx in range(0, num_episodes, episodes_per_batch):
         env.reset()
-        noise = np.random.choice([0.1,0.2,0.3,0.4,0.5])
+        noise = rng.choice([0.1,0.2,0.3,0.4,0.5])
         policy = get_mpc_controller(env, noise=noise)
         # prepare experience replay buffer
         buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=episodes_per_batch*env.episode_len, env=env)
