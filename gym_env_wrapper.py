@@ -116,7 +116,7 @@ def get_env():
     estimator.x0 = x0
     
     min_observation = np.array([0.0, -0.01, 0.0, 0.0])
-    max_observation = np.array([3.7, 10.0, 3.0, 500.0])
+    max_observation = np.array([3.7, 2.0, 3.0, 150.0])
     min_actions = np.array([0.0])
     max_actions = np.array([0.3])
     

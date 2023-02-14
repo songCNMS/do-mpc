@@ -153,7 +153,6 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
                 path_name = os.path.join(plot_dir, f"{n_epi}_reward.png")
                 plt.savefig(path_name)
             plt.close()
-
     observations_list = np.array(observations_list)
     actions_list = np.array(actions_list)
     rewards_list = np.array(rewards_list)
@@ -205,12 +204,7 @@ class OfflineRLModel(object):
         self.curr_algo = curr_algo
 
     def predict(self, state):
-        state = torch.from_numpy(np.asarray(state))
-        if self.curr_algo.scaler is not None: state = self.curr_algo.scaler.transform(state)
         inp = self.curr_algo.predict(state)  # shape (1,x)
-        if self.curr_algo.action_scaler is not None:
-            inp = torch.from_numpy(inp)
-            inp = self.curr_algo.action_scaler.reverse_transform(inp).cpu().numpy()
         return inp
 
 

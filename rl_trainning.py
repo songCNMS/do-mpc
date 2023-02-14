@@ -121,6 +121,8 @@ if __name__ == "__main__":
             global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
             ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = float('-inf')
 
+            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=10.0)
+
             if algo_name == 'CQL':
                 curr_algo = d3rlpy.algos.CQL(q_func_factory='qr', use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler) # use Quantile Regression Q function, default was 'mean'
             elif algo_name == 'PLAS':
