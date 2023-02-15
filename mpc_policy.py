@@ -4,7 +4,6 @@ import numpy as np
 from d3rlpy.argument_utility import ActionScalerArg
 from d3rlpy.constants import ActionSpace
 from d3rlpy.algos.base import AlgoBase
-from examples.batch_reactor.template_mpc import template_mpc
 
 
 class MPCPolicy(AlgoBase):
@@ -79,10 +78,9 @@ class MPCPolicy(AlgoBase):
     
     
 def get_mpc_controller(env, noise=0.0):
-    mpc = template_mpc(env.model)
-    mpc.x0 = env.state
+    mpc = env.mpc
+    env.reset()
     mpc.set_initial_guess()
-    
     policy = MPCPolicy(mpc_model=mpc, 
                        noise=noise, 
                        min_actions=env.min_actions, 

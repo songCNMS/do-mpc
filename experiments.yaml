@@ -1,6 +1,6 @@
 seed: 42
 num_of_seeds: 1
-env_name: 'batch_reactor'
+env_name: 'CSTR' #'batch_reactor', CSTR, IPR
 model_name: 'ppo'
 normalize: True
 dense_reward: True
@@ -29,7 +29,6 @@ default_loc: "d3rlpy_logs/"
 plt_dir: "plt_results"
 dataset_location: datasets # for dataset generation
 training_dataset_loc: 'datasets/'
-eval_dataset_loc: 'datasets/mpc_policy_batch_reactor_dataset_0.1_40.h5'
 
 # env specific configs
 reward_on_steady: True

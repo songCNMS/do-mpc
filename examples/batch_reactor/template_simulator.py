@@ -49,8 +49,11 @@ def template_simulator(model):
     p_num = simulator.get_p_template()
     p_num['Y_x'] = 0.5
     p_num['S_in'] = 200.0
-
+    Y_x_values = np.array([0.5, 0.4, 0.3])
+    S_in_values = np.array([200.0, 220.0, 180.0])
     def p_fun(t_now):
+        p_num['Y_x'] = np.random.choice(Y_x_values)
+        p_num['S_in'] = np.random.choice(S_in_values)
         return p_num
 
     simulator.set_p_fun(p_fun)
@@ -58,3 +61,8 @@ def template_simulator(model):
     simulator.setup()
 
     return simulator
+
+
+
+def reward_function(cur_step, simulator_data):
+    return simulator_data["_x", "P_s"][-1, 0]

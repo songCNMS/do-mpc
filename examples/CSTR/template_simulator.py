@@ -52,10 +52,15 @@ def template_simulator(model):
 
     simulator.set_tvp_fun(tvp_fun)
 
+    alpha_var = np.array([1., 1.05, 0.95])
+    beta_var = np.array([1., 1.1, 0.9])
+    
     p_num = simulator.get_p_template()
     p_num['alpha'] = 1
     p_num['beta'] = 1
     def p_fun(t_now):
+        p_num['alpha'] = np.random.choice(alpha_var)
+        p_num['beta'] = np.random.choice(beta_var)
         return p_num
 
     simulator.set_p_fun(p_fun)
@@ -63,3 +68,12 @@ def template_simulator(model):
     simulator.setup()
 
     return simulator
+
+
+def reward_function(cur_step, simulator_data):
+    reward = -(simulator_data['_x', 'C_b'][-1, 0] - 0.6)**2
+    reward -= 1e2*max(0, simulator_data['_x', 'T_R'][-1, 0]-140)
+    if cur_step > 0:
+        reward -= 0.1*(simulator_data['_u', 'F'][-2, 0] - simulator_data['_u', 'F'][-1, 0])**2
+        reward -= 1e-3*(simulator_data['_u', 'Q_dot'][-2, 0] - simulator_data['_u', 'Q_dot'][-1, 0])**2
+    return reward

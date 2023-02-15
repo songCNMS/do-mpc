@@ -49,10 +49,24 @@ def template_simulator(model):
     p_num = simulator.get_p_template()
     p_num['delH_R'] = 950
     p_num['k_0'] = 7
+    delH_R_var = np.array([950.0, 950.0 * 1.30, 950.0 * 0.70])
+    k_0_var = np.array([7.0*1.00, 7.0*1.30, 7.0*0.70])
     def p_fun(t_now):
+        p_num['delH_R'] = np.random.choice(delH_R_var)
+        p_num['k_0'] = np.random.choice(k_0_var)
         return p_num
+    
     simulator.set_p_fun(p_fun)
-
     simulator.setup()
 
     return simulator
+
+
+def reward_function(cur_step, simulator_data):
+    reward = simulator_data["_x", "m_P"][-1, 0]
+    reward -= 1e4*max(0, simulator_data['_x', 'T_R'][-1, 0]-365.15)
+    if cur_step > 0:
+        reward -= 0.002*(simulator_data['_u', 'm_dot_f'][-2, 0] - simulator_data['_u', 'm_dot_f'][-1, 0])**2
+        reward -= 0.004*(simulator_data['_u', 'T_in_M'][-2, 0] - simulator_data['_u', 'T_in_M'][-1, 0])**2
+        reward -= 0.002*(simulator_data['_u', 'T_in_EK'][-2, 0] - simulator_data['_u', 'T_in_EK'][-1, 0])**2
+    return reward

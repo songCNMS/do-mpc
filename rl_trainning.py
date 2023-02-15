@@ -18,6 +18,8 @@ import re
 import copy
 from gym_env_wrapper import get_env
 import argparse
+from sklearn.model_selection import train_test_split
+
 
 dir_loc = os.path.dirname(os.path.relpath(__file__))
 
@@ -26,14 +28,11 @@ parser.add_argument('--amlt', action='store_true', help="remote execution on aml
 parser.add_argument('--algo', type=str, help='algorithm', default="CQL")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
+# parser.add_argument("--env", type=str, help='env. name', default="CSTR")
 
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
-    dataset_dir = os.path.join(data_loc, 'datasets')
-    use_gpu = (False if args.device < 0 else args.device)
-
     with open(os.path.join(dir_loc, 'experiments.yaml'), 'r') as fp:
         config_dict = yaml.safe_load(fp)
     seed = config_dict['seed']
@@ -42,6 +41,10 @@ if __name__ == "__main__":
     model_name = config_dict['model_name']
     dense_reward = config_dict['dense_reward']
     debug_mode = config_dict['debug_mode']
+    
+    data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
+    dataset_dir = os.path.join(data_loc, 'datasets', env_name)
+    use_gpu = (False if args.device < 0 else args.device)
 
     # for offlineRL online learning
     online_training = config_dict['online_training']
@@ -62,11 +65,8 @@ if __name__ == "__main__":
     action_scaler = config_dict['action_scaler']
     reward_scaler = config_dict['reward_scaler']
     evaluate_on_environment = config_dict['evaluate_on_environment']
-    default_loc = os.path.join(data_loc, config_dict['default_loc'])
-    plt_dir = os.path.join(data_loc, config_dict['plt_dir'])
-    dataset_location = os.path.join(data_loc, config_dict['dataset_location'])
-    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'])
-    eval_dataset_loc = os.path.join(data_loc, config_dict['eval_dataset_loc'])
+    default_loc = os.path.join(data_loc, config_dict['default_loc'], env_name)
+    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'], env_name)
 
     # env specific configs
     reward_on_steady = config_dict.get('reward_on_steady', None)
@@ -101,7 +101,8 @@ if __name__ == "__main__":
         np.random.seed(seed)
         random.seed(seed)
         
-        env = get_env()
+        env = get_env(env_name)
+        
         if not online_training:
             dataset = None
             for file_loc in os.listdir(training_dataset_loc):
@@ -111,9 +112,9 @@ if __name__ == "__main__":
                 if dataset is None: dataset = _dataset
                 else: dataset.extend(_dataset)
             assert dataset is not None, "trainning data is empty"
-            eval_dataset = d3rlpy.dataset.MDPDataset.load(eval_dataset_loc)
-            feeded_episodes = dataset.episodes
-            eval_feeded_episodes = eval_dataset.episodes
+            train_episodes, test_episodes = train_test_split(dataset.episodes)
+            feeded_episodes = train_episodes
+            eval_feeded_episodes = test_episodes
             print(dataset.actions[:10])
         for algo_name in args.algo.split(","):
             prev_evaluate_on_environment_scorer = float('-inf')
@@ -121,7 +122,7 @@ if __name__ == "__main__":
             global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
             ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = float('-inf')
 
-            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=10.0)
+            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=5.0)
 
             if algo_name == 'CQL':
                 curr_algo = d3rlpy.algos.CQL(q_func_factory='qr', use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler) # use Quantile Regression Q function, default was 'mean'

@@ -217,12 +217,13 @@ parser.add_argument('--algo', type=str, help='algorithm', default="CQL")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
 parser.add_argument("--num_episodes", type=int, help='num. of episodes', default="1")
+# parser.add_argument('--env', type=str, help='env. name', default="CSTR")
+
+
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
-    dataset_dir = os.path.join(data_loc, 'datasets')
-    use_gpu = (False if args.device < 0 else args.device)
     with open(os.path.join(dir_loc, 'experiments.yaml'), 'r') as fp:
         config_dict = yaml.safe_load(fp)
     seed = config_dict['seed']
@@ -231,6 +232,9 @@ if __name__ == "__main__":
     model_name = config_dict['model_name']
     dense_reward = config_dict['dense_reward']
     debug_mode = config_dict['debug_mode']
+    data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
+    dataset_dir = os.path.join(data_loc, 'datasets', env_name)
+    use_gpu = (False if args.device < 0 else args.device)
 
     # for offlineRL online learning
     online_training = config_dict['online_training']
@@ -254,7 +258,6 @@ if __name__ == "__main__":
     plt_dir = os.path.join(data_loc, config_dict['plt_dir'])
     dataset_location = os.path.join(data_loc, config_dict['dataset_location'])
     training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'])
-    eval_dataset_loc = os.path.join(data_loc, config_dict['eval_dataset_loc'])
 
     # env specific configs
     reward_on_steady = config_dict.get('reward_on_steady', None)
@@ -271,7 +274,7 @@ if __name__ == "__main__":
         for i in range(num_of_seeds):
             seeds.append(random.randint(0, 2**32-1))
     
-    env = get_env()
+    env = get_env(env_name)
     # algo_names = ['PID', "MPC", 'BC', 'CQL', 'PLAS', 'PLASWithPerturbation', 'BEAR', 'SAC', 'BCQ', 'CRR', 'AWR', 'AWAC', 'DDPG', 'TD3', 'COMBO', 'MOPO']
     algo_names = args.algo.split(",")
     results_csv = ['algo_name', 'on_episodes_reward_mean', 'episodes_reward_std', 'all_reward_mean', 'all_reward_std']
@@ -285,7 +288,7 @@ if __name__ == "__main__":
             else:
                 curr_algo = OfflineRLModel(algo_name, dir_loc, config_dict_loc=f'BEST_MODEL.yaml')
                 algorithms = [(curr_algo, algo_name)]
-            save_dir = os.path.join(plt_dir, algo_name)
+            save_dir = os.path.join(plt_dir, env_name, algo_name)
             observations_list, actions_list, rewards_list = evalute_algorithms(env, algorithms, num_episodes=num_episodes, to_plt=args.plt, plot_dir=save_dir)
             results_dict = report_rewards(env, rewards_list, algo_names=[_a_name for _, _a_name in algorithms], save_dir=save_dir)
             results_csv.append([algo_name, results_dict[f'{algo_name}_on_episodes_reward_mean'], results_dict[f'{algo_name}_on_episodes_reward_std'], results_dict[f'{algo_name}_all_reward_mean'], results_dict[f'{algo_name}_all_reward_std']])
