@@ -18,7 +18,9 @@ from examples.batch_reactor.template_mpc import template_mpc
 from examples.batch_reactor.template_simulator import template_simulator
 
 from gym_env_wrapper import get_env
-from mpc_policy import get_mpc_controller
+from mpc_policy import get_mpc_controller, get_noisy_rl_policy
+from algo_evaluation import OfflineRLModel
+
 import time
 import argparse
 
@@ -38,7 +40,7 @@ dir_loc = os.path.dirname(os.path.relpath(__file__))
 if __name__ == '__main__':
     args = parser.parse_args()
     data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
-    dataset_dir = os.path.join(data_loc, 'datasets', args.env)
+    dataset_dir = os.path.join(data_loc, 'datasets', args.env, str(args.iter))
 
     env = get_env(args.env)
     episodes_per_batch = 10
@@ -46,7 +48,11 @@ if __name__ == '__main__':
     rng = np.random.default_rng(args.seed)
     for batch_idx in range(args.start_episodes, args.end_episodes, episodes_per_batch):
         noise = rng.choice([0.1,0.2,0.3,0.4,0.5])
-        policy = get_mpc_controller(env, noise=noise)
+        if args.algo == "MPC": policy = get_mpc_controller(env, noise=noise)
+        else:
+            model_loc = os.path.join("d3rlpy_logs", args.env, args.model)
+            base_policy = OfflineRLModel(args.algo, model_loc)
+            policy = get_noisy_rl_policy(env, base_policy, noise)
         # prepare experience replay buffer
         buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=episodes_per_batch*env.episode_len, env=env)
         # start data collection
@@ -54,4 +60,4 @@ if __name__ == '__main__':
         # export as MDPDataset
         dataset = buffer.to_mdp_dataset()
         # save MDPDataset
-        dataset.dump(f"{dataset_dir}/mpc_policy_batch_reactor_dataset_{noise}_{batch_idx}.h5")
+        dataset.dump(f"{dataset_dir}/{args.algo}_dataset_{noise}_{batch_idx}.h5")

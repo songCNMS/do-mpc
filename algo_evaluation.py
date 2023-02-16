@@ -160,12 +160,9 @@ def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
 
 
 class OfflineRLModel(object):
-    def __init__(self, algo_name, dir_loc, config_dict_loc='experiments.yaml'):
-        with open(os.path.join(dir_loc, config_dict_loc), 'r') as fp:
-            config_dict = yaml.safe_load(fp)
-        best_loc = os.path.join(dir_loc, config_dict['best_loc'])
-        best_params = os.path.join(best_loc, f'{algo_name}/params.json')
-        best_ckpt = os.path.join(best_loc, f'{algo_name}/best.pt')
+    def __init__(self, algo_name, model_loc):
+        best_params = os.path.join(model_loc, f'{algo_name}/params.json')
+        best_ckpt = os.path.join(model_loc, f'{algo_name}/best.pt')
 
         if algo_name == 'CQL':
             curr_algo = d3rlpy.algos.CQL.from_json(best_params)
@@ -285,7 +282,10 @@ if __name__ == "__main__":
                 baseline_model_name = "MPC"
                 algorithms = [(baseline_model, baseline_model_name)]
             else:
-                curr_algo = OfflineRLModel(algo_name, dir_loc, config_dict_loc=f'BEST_MODEL.yaml')
+                with open(os.path.join(dir_loc, "BEST_MODEL.yaml"), 'r') as fp:
+                    config_dict = yaml.safe_load(fp)
+                best_model_loc = os.path.join(dir_loc, config_dict['best_loc'])
+                curr_algo = OfflineRLModel(algo_name, best_model_loc)
                 algorithms = [(curr_algo, algo_name)]
             save_dir = os.path.join(plt_dir, env_name, algo_name)
             observations_list, actions_list, rewards_list = evalute_algorithms(env, algorithms, num_episodes=num_episodes, to_plt=args.plt, plot_dir=save_dir)
