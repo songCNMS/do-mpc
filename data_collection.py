@@ -19,20 +19,21 @@ from examples.batch_reactor.template_simulator import template_simulator
 
 from gym_env_wrapper import get_env
 from mpc_policy import get_mpc_controller
-
-dir_loc = os.path.dirname(os.path.relpath(__file__))
-
-
+import time
 import argparse
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument("--start_episodes", type=int, help='total samples', default="0")
 parser.add_argument("--end_episodes", type=int, help='total samples', default="1000")
 parser.add_argument("--seed", type=int, help='seed', default="13")
 parser.add_argument('--env', type=str, help='env. name', default="CSTR")
+parser.add_argument('--iter', type=int, help='iteration', default=0)
+parser.add_argument('--algo', type=str, help='algo. used to collect data', default="CQL")
+parser.add_argument('--model', type=str, help='model loc. used to collect data', default="random_42")
 
 
-import time
+dir_loc = os.path.dirname(os.path.relpath(__file__))
 
 if __name__ == '__main__':
     args = parser.parse_args()
