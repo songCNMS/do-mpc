@@ -23,7 +23,7 @@ if __name__ == "__main__":
     device_count = torch.cuda.device_count()
     jobs = []
     for i, cmd in enumerate(cmds):
-        device_idx = i % device_count
+        device_idx = (i % device_count if device_count > 0 else -1)
         cmd += " --device %i"%device_idx
         p = mp.Process(target=run, args=(cmd,))
         jobs.append(p)

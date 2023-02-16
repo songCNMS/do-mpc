@@ -237,7 +237,6 @@ if __name__ == "__main__":
     use_gpu = (False if args.device < 0 else args.device)
 
     # for offlineRL online learning
-    online_training = config_dict['online_training']
     buffer_maxlen = config_dict['buffer_maxlen']
     explorer_start_epsilon = config_dict['explorer_start_epsilon']
     explorer_end_epsilon = config_dict['explorer_end_epsilon']

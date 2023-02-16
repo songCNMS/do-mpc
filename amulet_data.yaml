@@ -34,18 +34,42 @@ data:
 
 jobs:
 
-- name: rl4con-10000
-  sku: G1
+- name: CSTR-data-0-1000
+  sku: C2
   command:
-  - python data_collection.py --amlt --steps 10000
+  - python data_collection.py --amlt --start_episodes 0 --end_episodes 1000 --env CSTR --seed 3
 
-- name: rl4con-100000
-  sku: G1
+- name: CSTR-data-1000-2000
+  sku: C2
   command:
-  - python data_collection.py --amlt --steps 100000
+  - python data_collection.py --amlt --start_episodes 1000 --end_episodes 2000 --env CSTR --seed 5
 
+- name: CSTR-data-2000-3000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 2000 --end_episodes 3000 --env CSTR --seed 7
 
-# - name: smpl_reactor_data_pid
-#   sku: G1
-#   command:
-#   - python smpl-experiments/reactorenv_experiments/offline_data_generation.py --policy pid --amlt
+- name: CSTR-data-3000-4000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 3000 --end_episodes 4000 --env CSTR --seed 11
+
+- name: CSTR-data-4000-5000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 4000 --end_episodes 5000 --env CSTR --seed 17
+
+- name: CSTR-data-5000-6000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 5000 --end_episodes 6000 --env CSTR --seed 19
+
+- name: CSTR-data-6000-7000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 6000 --end_episodes 7000 --env CSTR --seed 23
+
+- name: CSTR-data-7000-8000
+  sku: C2
+  command:
+  - python data_collection.py --amlt --start_episodes 7000 --end_episodes 8000 --env CSTR --seed 29

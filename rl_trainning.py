@@ -26,6 +26,7 @@ dir_loc = os.path.dirname(os.path.relpath(__file__))
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--algo', type=str, help='algorithm', default="CQL")
+parser.add_argument('--online', action='store_true', help="online learning")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
 # parser.add_argument("--env", type=str, help='env. name', default="CSTR")
@@ -47,7 +48,7 @@ if __name__ == "__main__":
     use_gpu = (False if args.device < 0 else args.device)
 
     # for offlineRL online learning
-    online_training = config_dict['online_training']
+    online_training = args.online # config_dict['online_training']
     buffer_maxlen = config_dict['buffer_maxlen']
     explorer_start_epsilon = config_dict['explorer_start_epsilon']
     explorer_end_epsilon = config_dict['explorer_end_epsilon']
@@ -103,29 +104,45 @@ if __name__ == "__main__":
         
         env = get_env(env_name)
         
-        if not online_training:
-            dataset = None
-            for file_loc in os.listdir(training_dataset_loc):
-                data_loc = os.path.join(training_dataset_loc, file_loc)
-                print("loading data in", data_loc)  
-                _dataset = d3rlpy.dataset.MDPDataset.load(data_loc)
-                if dataset is None: dataset = _dataset
-                else: dataset.extend(_dataset)
-            assert dataset is not None, "trainning data is empty"
-            train_episodes, test_episodes = train_test_split(dataset.episodes)
-            feeded_episodes = train_episodes
-            eval_feeded_episodes = test_episodes
-            print(dataset.actions[:10])
+        dataset = None
+        for file_loc in os.listdir(training_dataset_loc):
+            data_loc = os.path.join(training_dataset_loc, file_loc)
+            print("loading data in", data_loc)  
+            _dataset = d3rlpy.dataset.MDPDataset.load(data_loc)
+            if dataset is None: dataset = _dataset
+            else: dataset.extend(_dataset)
+        assert dataset is not None, "trainning data is empty"
+        train_episodes, test_episodes = train_test_split(dataset.episodes)
+        feeded_episodes = train_episodes
+        eval_feeded_episodes = test_episodes
+        print(dataset.actions[:10])
+        
         for algo_name in args.algo.split(","):
             prev_evaluate_on_environment_scorer = float('-inf')
             prev_continuous_action_diff_scorer = float('inf')
             global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
             ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = float('-inf')
 
-            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=5.0)
+            scaler = d3rlpy.preprocessing.MinMaxScaler(dataset)
+            action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(dataset)
+            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=1.0)
+            encoder_factory = d3rlpy.models.encoders.DefaultEncoderFactory(activation="tanh", dropout_rate=0.3)
+            optim_factory=d3rlpy.models.optimizers.AdamFactory(optim_cls='Adam', betas=(0.9, 0.999), eps=1e-08, weight_decay=0.1, amsgrad=False)
 
             if algo_name == 'CQL':
-                curr_algo = d3rlpy.algos.CQL(q_func_factory='qr', use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler) # use Quantile Regression Q function, default was 'mean'
+                curr_algo = d3rlpy.algos.CQL(q_func_factory='qr', use_gpu=use_gpu, 
+                                             batch_size = BATCH_SIZE, scaler = scaler, 
+                                             actor_learning_rate=0.001, 
+                                             critic_learning_rate=0.003, 
+                                             temp_learning_rate=0.001, 
+                                             alpha_learning_rate=0.0,
+                                             conservative_weight=5.0,
+                                             action_scaler=action_scaler, 
+                                             reward_scaler=reward_scaler,
+                                             actor_encoder_factory=encoder_factory, 
+                                             critic_encoder_factory=encoder_factory,
+                                             actor_optim_factory=optim_factory,
+                                             critic_optim_factory=optim_factory)
             elif algo_name == 'PLAS':
                 curr_algo = d3rlpy.algos.PLAS(q_func_factory='qr', use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler) # use Quantile Regression Q function, default was 'mean'
             elif algo_name == 'PLASWithPerturbation':
@@ -141,7 +158,15 @@ if __name__ == "__main__":
             elif algo_name == 'BEAR':
                 curr_algo = d3rlpy.algos.BEAR(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
             elif algo_name == 'SAC':
-                curr_algo = d3rlpy.algos.SAC(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
+                curr_algo = d3rlpy.algos.SAC(use_gpu=use_gpu, batch_size = BATCH_SIZE, 
+                                             actor_learning_rate=0.001, 
+                                             critic_learning_rate=0.003, 
+                                             temp_learning_rate=0.001, 
+                                             alpha_learning_rate=0.001,
+                                             scaler = scaler, action_scaler=action_scaler, 
+                                             reward_scaler=reward_scaler,
+                                             actor_encoder_factory=encoder_factory, 
+                                             critic_encoder_factory=encoder_factory)
             elif algo_name == 'BCQ':
                 curr_algo = d3rlpy.algos.BCQ(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
             elif algo_name == 'CRR':
@@ -149,7 +174,12 @@ if __name__ == "__main__":
             elif algo_name == 'AWR':
                 curr_algo = d3rlpy.algos.AWR(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
             elif algo_name == 'AWAC':
-                curr_algo = d3rlpy.algos.AWAC(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
+                curr_algo = d3rlpy.algos.AWAC(use_gpu=use_gpu, batch_size = BATCH_SIZE, 
+                                              scaler = scaler, 
+                                              action_scaler=action_scaler, 
+                                              reward_scaler=reward_scaler,
+                                              actor_encoder_factory=encoder_factory, 
+                                              critic_encoder_factory=encoder_factory)
             elif algo_name == 'COMBO':
                 dynamics = 1
             #     dynamics = d3rlpy.dynamics.ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=use_gpu)
@@ -180,9 +210,20 @@ if __name__ == "__main__":
                     logdir=logdir,
                     scorers=scorers)
                 if algo_name == 'COMBO':
-                    curr_algo = d3rlpy.algos.COMBO(dynamics=dynamics, use_gpu=use_gpu, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
+                    curr_algo = d3rlpy.algos.COMBO(dynamics=dynamics, use_gpu=use_gpu, 
+                                                   scaler = scaler, 
+                                                   action_scaler=action_scaler, 
+                                                   reward_scaler=reward_scaler,
+                                                   actor_encoder_factory=encoder_factory, 
+                                                   critic_encoder_factory=encoder_factory)
                 elif algo_name == 'MOPO':
-                    curr_algo = d3rlpy.algos.MOPO(dynamics=dynamics, use_gpu=use_gpu, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
+                    curr_algo = d3rlpy.algos.MOPO(dynamics=dynamics, 
+                                                  use_gpu=use_gpu, 
+                                                  scaler = scaler, 
+                                                  action_scaler=action_scaler, 
+                                                  reward_scaler=reward_scaler,
+                                                  actor_encoder_factory=encoder_factory, 
+                                                  critic_encoder_factory=encoder_factory)
                 else:
                     raise Exception("algo_name is invalid!")
             # --------- Model Based Algorithms leverages the probablistic ensemble dynamics model to generate new dynamics data with uncertainty penalties.  --------- 
@@ -237,17 +278,16 @@ if __name__ == "__main__":
                     callback=online_saving_callback)
             else:
                 for epoch, metrics in curr_algo.fitter(feeded_episodes, eval_episodes=eval_feeded_episodes, n_epochs=N_EPOCHS, with_timestamp=False, logdir=logdir, scorers=scorers):
-                    done = False
-                    observation = env.reset()
-                    step_cnt = 0
-                    while not done:
-                        observation = np.array(observation).reshape((1, -1))
-                        action = curr_algo.predict(observation)[0]
-                        observation, reward, done, _ = env.step(action)
-                        print(step_cnt, "Action: ", action, "reward: ", reward)
-                        # print("prev. obs.: ", env.previous_observation, "cur. obs.: ", observation)
-                        step_cnt += 1
-                    
+                    # done = False
+                    # observation = env.reset()
+                    # step_cnt = 0
+                    # while not done:
+                    #     observation = np.array(observation).reshape((1, -1))
+                    #     action = curr_algo.predict(observation)[0]
+                    #     observation, reward, done, _ = env.step(action)
+                    #     print(step_cnt, "Action: ", action, "reward: ", reward)
+                    #     # print("prev. obs.: ", env.previous_observation, "cur. obs.: ", observation)
+                    #     step_cnt += 1
                     if evaluate_on_environment:
                         if metrics['evaluate_on_environment_scorer'] > prev_evaluate_on_environment_scorer:
                             prev_evaluate_on_environment_scorer = metrics['evaluate_on_environment_scorer']

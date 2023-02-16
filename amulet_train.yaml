@@ -34,27 +34,13 @@ data:
 
 jobs:
 
-- name: train_MOPO
+- name: train_MOPOCQLSAC
   sku: G1
   command:
-  - python rl_trainning.py --algo MOPO --amlt
+  - python trainning_batch.py --algo MOPO,CQL,SAC --amlt
 
-- name: train_CQL
+- name: train_AWACTD3PlusBC
   sku: G1
   command:
-  - python rl_trainning.py --algo CQL --amlt
+  - python trainning_batch.py --algo TD3PlusBC,AWAC --amlt
 
-- name: train_TD3PlusBC
-  sku: G1
-  command:
-  - python rl_trainning.py --algo TD3PlusBC --amlt
-
-- name: train_PLASWithPerturbation
-  sku: G1
-  command:
-  - python rl_trainning.py --algo PLASWithPerturbation --amlt
-
-- name: train_SAC
-  sku: G1
-  command:
-  - python rl_trainning.py --algo SAC --amlt

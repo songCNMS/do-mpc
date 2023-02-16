@@ -71,9 +71,15 @@ def template_simulator(model):
 
 
 def reward_function(cur_step, simulator_data):
-    reward = -(simulator_data['_x', 'C_b'][-1, 0] - 0.6)**2
-    reward -= 1e2*max(0, simulator_data['_x', 'T_R'][-1, 0]-140)
+    reward = -abs(simulator_data['_x', 'C_b'][-1, 0] - 0.6)*10.0
+    reward -= max(0, simulator_data['_x', 'T_R'][-1, 0]-140)/100.0
     if cur_step > 0:
-        reward -= 0.1*(simulator_data['_u', 'F'][-2, 0] - simulator_data['_u', 'F'][-1, 0])**2
-        reward -= 1e-3*(simulator_data['_u', 'Q_dot'][-2, 0] - simulator_data['_u', 'Q_dot'][-1, 0])**2
+        reward -= abs(simulator_data['_u', 'F'][-2, 0] - simulator_data['_u', 'F'][-1, 0])/50.0
+        reward -= abs(simulator_data['_u', 'Q_dot'][-2, 0] - simulator_data['_u', 'Q_dot'][-1, 0])/5000.0
+    
+    # reward = -(simulator_data['_x', 'C_b'][-1, 0] - 0.6)**2
+    # reward -= 1e2*max(0, simulator_data['_x', 'T_R'][-1, 0]-140)
+    # if cur_step > 0:
+    #     reward -= 0.1*(simulator_data['_u', 'F'][-2, 0] - simulator_data['_u', 'F'][-1, 0])**2
+    #     reward -= 1e-3*(simulator_data['_u', 'Q_dot'][-2, 0] - simulator_data['_u', 'Q_dot'][-1, 0])**2
     return reward
