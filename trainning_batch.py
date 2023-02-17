@@ -6,6 +6,7 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--algo', type=str, help='algos', default="CQL")
+parser.add_argument("--iter", type=int, help='iter. num.', default=0)
 
 
 def run(cmd):
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cmds = []
     for algo in args.algo.split(","):
-        cmd_prefix = f"python rl_trainning.py --algo {algo} "
+        cmd_prefix = f"python rl_trainning.py --algo {algo} --iter {args.iter} "
         if args.amlt: cmd_prefix += "--amlt "
         cmds.append(cmd_prefix)
     device_count = torch.cuda.device_count()

@@ -47,7 +47,8 @@ if __name__ == '__main__':
     os.makedirs(dataset_dir, exist_ok=True)
     rng = np.random.default_rng(args.seed)
     for batch_idx in range(args.start_episodes, args.end_episodes, episodes_per_batch):
-        noise = rng.choice([0.1,0.2,0.3,0.4,0.5])
+        # noise = rng.choice([0.1,0.2,0.3,0.4,0.5])
+        noise = rng.choice([0.0, 0.05, 0.1, 0.15, 0.2])
         if args.algo == "MPC": policy = get_mpc_controller(env, noise=noise)
         else:
             model_loc = os.path.join("d3rlpy_logs", args.env, args.model)

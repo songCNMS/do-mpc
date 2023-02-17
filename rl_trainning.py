@@ -29,6 +29,7 @@ parser.add_argument('--algo', type=str, help='algorithm', default="CQL")
 parser.add_argument('--online', action='store_true', help="online learning")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
+parser.add_argument("--iter", type=int, help='iter. num.', default=0)
 # parser.add_argument("--env", type=str, help='env. name', default="CSTR")
 
 
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     reward_scaler = config_dict['reward_scaler']
     evaluate_on_environment = config_dict['evaluate_on_environment']
     default_loc = os.path.join(data_loc, config_dict['default_loc'], env_name)
-    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'], env_name)
+    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'], env_name, str(args.iter))
 
     # env specific configs
     reward_on_steady = config_dict.get('reward_on_steady', None)
@@ -115,7 +116,7 @@ if __name__ == "__main__":
         train_episodes, test_episodes = train_test_split(dataset.episodes)
         feeded_episodes = train_episodes
         eval_feeded_episodes = test_episodes
-        print(dataset.actions[:10])
+        print(dataset.actions[:100])
         
         for algo_name in args.algo.split(","):
             prev_evaluate_on_environment_scorer = float('-inf')
@@ -130,7 +131,7 @@ if __name__ == "__main__":
             optim_factory=d3rlpy.models.optimizers.AdamFactory(optim_cls='Adam', betas=(0.9, 0.999), eps=1e-08, weight_decay=0.1, amsgrad=False)
 
             if algo_name == 'CQL':
-                curr_algo = d3rlpy.algos.CQL(q_func_factory='qr', use_gpu=use_gpu, 
+                curr_algo = d3rlpy.algos.CQL(q_func_factory='mean', use_gpu=use_gpu, 
                                              batch_size = BATCH_SIZE, scaler = scaler, 
                                              actor_learning_rate=0.001, 
                                              critic_learning_rate=0.003, 

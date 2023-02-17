@@ -18,6 +18,8 @@ import time
 # 2. distance between current state and the previous state
 # 3. distance between current action and the previous action
 
+
+# TODO: historical observations in the state
 class ControlEnv(gym.Env):
     def __init__(self,
                  model, 
@@ -29,6 +31,7 @@ class ControlEnv(gym.Env):
                  min_actions,
                  max_actions,
                  reward_function,
+                 init_obs_space=None,
                  seed=0,
                  steady_observation=None,
                  steady_action=None,
@@ -60,6 +63,7 @@ class ControlEnv(gym.Env):
         self.action_space.seed(seed)
         self.observation_space.seed(seed)
         self.obs_refactor = obs_refactor
+        self.init_state_sampler = (init_obs_space(seed) if init_obs_space is not None else None)
             
     def get_reward(self):
         return self.reward_function(self.cur_step, self.simulator.data)
@@ -80,10 +84,12 @@ class ControlEnv(gym.Env):
         if seed is not None:
             self.action_space.seed(seed)
             self.observation_space.seed(seed)
+            if self.init_state_sampler is not None: self.init_state_sampler.seed(seed)
         self.simulator.reset_history()
         self.estimator.reset_history()
         if init_state is None: 
-            init_state = self.observation_space.sample()
+            if self.init_state_sampler is None: init_state = self.observation_space.sample()
+            else: init_state = self.init_state_sampler.sample()
             if self.obs_refactor is not None: init_state = self.obs_refactor(init_state)
         self.simulator.x0 = init_state
         self.estimator.x0 = init_state
@@ -154,19 +160,23 @@ def get_CSTR_env():
     min_actions = np.array([5.0, -8500.0])
     max_actions = np.array([100.0, 0.0])
     
+    def init_obs_space(seed):
+        init_min_observation = np.array([C_a_0, C_b_0, T_R_0, T_K_0])*0.95
+        init_max_observation = np.array([C_a_0, C_b_0, T_R_0, T_K_0])*1.05
+        observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
+        observation_space.seed(seed)
+        return observation_space
+    
     env = ControlEnv(model, simulator, estimator, mpc,
                     min_observation, max_observation,
                     min_actions, max_actions,
                     reward_function,
+                    init_obs_space=init_obs_space,
                     steady_observation=x0,
                     error_reward=-1000)
     env.reset(init_state=x0)
     return env
 
-def IPR_obs_refactor(obs):
-    p = [950.0, 5.0]
-    obs[-1] = obs[1]*p[0]/((obs[0]+obs[1]+obs[2])*p[1]) + obs[3]
-    return obs
 
 def get_IPR_env():
     from examples.industrial_poly.template_model import template_model
@@ -179,6 +189,10 @@ def get_IPR_env():
     # Set the initial state of the controller and simulator:
     delH_R_real = 950.0
     c_pR = 5.0
+    def IPR_obs_refactor(obs):
+        p = [delH_R_real, c_pR]
+        obs[-1] = obs[1]*p[0]/((obs[0]+obs[1]+obs[2])*p[1]) + obs[3]
+        return obs
     # x0 is a property of the simulator - we obtain it and set values.
     x0 = simulator.x0
     x0['m_W'] = 10000.0
@@ -190,7 +204,8 @@ def get_IPR_env():
     x0['T_EK'] = 35.0 + 273.15
     x0['Tout_AWT'] = 35.0 + 273.15
     x0['accum_monom'] = 300.0
-    x0['T_adiab'] = x0['m_A']*delH_R_real/((x0['m_W'] + x0['m_A'] + x0['m_P']) * c_pR) + x0['T_R']
+    T_adiab = x0['m_A']*delH_R_real/((x0['m_W'] + x0['m_A'] + x0['m_P']) * c_pR) + x0['T_R']
+    x0['T_adiab'] = T_adiab
     temp_range = 2.0
     simulator.x0 = x0
     estimator.x0 = x0
@@ -201,10 +216,19 @@ def get_IPR_env():
     min_actions = np.array([0.0, 333.15, 333.15])
     max_actions = np.array([3.0e4, 373.15, 373.15])
     
+    def init_obs_space(seed):
+        init_state = np.array([10000.0, 853.0, 26.5, 90.0 + 273.15, 90.0 + 273.15, 90.0 + 273.15, 35.0 + 273.15, 35.0 + 273.15, 300.0, T_adiab])
+        init_min_observation = init_state*0.95
+        init_max_observation = init_state*1.05
+        observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
+        observation_space.seed(seed)
+        return observation_space
+    
     env = ControlEnv(model, simulator, estimator, mpc,
                      min_observation, max_observation,
                      min_actions, max_actions,
                      reward_function,
+                     init_obs_space=init_obs_space,
                      steady_observation=x0,
                      error_reward=-1000,
                      obs_refactor=IPR_obs_refactor)
