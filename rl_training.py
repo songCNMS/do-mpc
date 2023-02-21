@@ -19,6 +19,29 @@ import copy
 from gym_env_wrapper import get_env
 import argparse
 from sklearn.model_selection import train_test_split
+from mpc_policy import get_mpc_controller
+
+
+class LinearDecayEpsilonMPC(d3rlpy.online.explorers.LinearDecayEpsilonGreedy):
+
+    def __init__(
+        self,
+        mpc_policy,
+        start_epsilon: float = 1.0,
+        end_epsilon: float = 0.1,
+        duration: int = 1000000,
+    ):
+        super().__init__(start_epsilon=start_epsilon,
+                         end_epsilon=end_epsilon,
+                         duration=duration)
+        self.mpc_policy = mpc_policy
+
+    def sample(self, algo, x, step):
+        greedy_actions = algo.predict(x)
+        mpc_actions = self.mpc_policy.predict(x)
+        is_random = np.random.random(x.shape[0]) < self.compute_epsilon(step)
+        return np.where(is_random, mpc_actions, greedy_actions)
+
 
 
 dir_loc = os.path.dirname(os.path.relpath(__file__))
@@ -197,8 +220,8 @@ if __name__ == "__main__":
             # print(dataset_name, env.action_space.shape, env.observation_space.shape, len(dataset.episodes), np.ceil(len(dataset.episodes)*0.01))
             
             logdir = f"{default_loc}/{args.exp}_{seed}/"
-            acutal_dir = logdir+'/'+algo_name
-            if os.path.exists(acutal_dir): shutil.rmtree(acutal_dir)
+            actual_dir = logdir+'/'+algo_name
+            if os.path.exists(logdir): shutil.rmtree(logdir)
             os.makedirs(logdir, exist_ok=True)
             if algo_name in ['COMBO', 'MOPO']:
                 scorers={
@@ -264,13 +287,17 @@ if __name__ == "__main__":
                     global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
                     if mean_env_ret < ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER:
                         ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = mean_env_ret
-                        curr_algo.save_model(os.path.join(acutal_dir, 'best_env.pt'))
+                        curr_algo.save_model(os.path.join(actual_dir, 'best_env.pt'))
 
-                explorer = d3rlpy.online.explorers.LinearDecayEpsilonGreedy(start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
+
+                mpc_policy = get_mpc_controller(env)
+                # explorer = d3rlpy.online.explorers.LinearDecayEpsilonGreedy(start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
+                explorer = LinearDecayEpsilonMPC(mpc_policy, start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
                 buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=buffer_maxlen, env=env)
                 
                 curr_algo.fit_online(env, buffer, explorer=explorer, # you don't need this with probablistic policy algorithms
                     eval_env=env,
+                    eval_epsilon=0.0,
                     n_steps=N_EPOCHS*n_steps_per_epoch,
                     n_steps_per_epoch=n_steps_per_epoch,
                     update_interval=online_update_interval,
@@ -281,7 +308,7 @@ if __name__ == "__main__":
                     logdir=logdir,
                     callback=online_saving_callback)
             else:
-                best_ckpt = os.path.join(acutal_dir, 'best.pt')
+                best_ckpt = os.path.join(actual_dir, 'best.pt')
                 if args.iter > 0 and os.path.exists(best_ckpt): curr_algo.load_model(best_ckpt)
                 for epoch, metrics in curr_algo.fitter(feeded_episodes, eval_episodes=eval_feeded_episodes, n_epochs=N_EPOCHS, with_timestamp=False, logdir=logdir, scorers=scorers):
                     # done = False
@@ -297,12 +324,12 @@ if __name__ == "__main__":
                     if evaluate_on_environment:
                         if metrics['evaluate_on_environment_scorer'] > prev_evaluate_on_environment_scorer:
                             prev_evaluate_on_environment_scorer = metrics['evaluate_on_environment_scorer']
-                            curr_algo.save_model(os.path.join(acutal_dir, 'best_evaluate_on_environment_scorer.pt'))
+                            curr_algo.save_model(os.path.join(actual_dir, 'best_evaluate_on_environment_scorer.pt'))
                     if metrics['continuous_action_diff_scorer'] < prev_continuous_action_diff_scorer:
                         prev_continuous_action_diff_scorer = metrics['continuous_action_diff_scorer']
-                        curr_algo.save_model(os.path.join(acutal_dir, 'best_continuous_action_diff_scorer.pt'))
+                        curr_algo.save_model(os.path.join(actual_dir, 'best_continuous_action_diff_scorer.pt'))
                     if evaluate_on_environment:
-                        shutil.copyfile(os.path.join(acutal_dir, 'best_evaluate_on_environment_scorer.pt'), os.path.join(acutal_dir, 'best.pt'))
+                        shutil.copyfile(os.path.join(actual_dir, 'best_evaluate_on_environment_scorer.pt'), os.path.join(actual_dir, 'best.pt'))
                     else:
-                        shutil.copyfile(os.path.join(acutal_dir, 'best_continuous_action_diff_scorer.pt'), os.path.join(acutal_dir, 'best.pt'))
+                        shutil.copyfile(os.path.join(actual_dir, 'best_continuous_action_diff_scorer.pt'), os.path.join(actual_dir, 'best.pt'))
             # wandb_run.finish()
