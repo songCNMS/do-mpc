@@ -161,8 +161,8 @@ def get_CSTR_env():
     max_actions = np.array([100.0, 0.0])
     
     def init_obs_space(seed):
-        init_min_observation = np.array([C_a_0, C_b_0, T_R_0, T_K_0])*0.95
-        init_max_observation = np.array([C_a_0, C_b_0, T_R_0, T_K_0])*1.05
+        init_min_observation = np.array([0.6, 0.3, 125, 125])
+        init_max_observation = np.array([1.0, 0.8, 140, 135])
         observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
         observation_space.seed(seed)
         return observation_space

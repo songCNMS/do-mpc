@@ -18,7 +18,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cmds = []
     for algo in args.algo.split(","):
-        cmd_prefix = f"python rl_trainning.py --algo {algo} --iter {args.iter} "
+        cmd_prefix = f"python rl_training.py --algo {algo} --iter {args.iter} "
         if args.amlt: cmd_prefix += "--amlt "
         cmds.append(cmd_prefix)
     device_count = torch.cuda.device_count()

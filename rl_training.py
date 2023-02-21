@@ -32,7 +32,7 @@ parser.add_argument("--device", type=int, help='device id', default="0")
 parser.add_argument("--iter", type=int, help='iter. num.', default=0)
 # parser.add_argument("--env", type=str, help='env. name', default="CSTR")
 
-
+# TODO: load previous algorithm before training
 if __name__ == "__main__":
     args = parser.parse_args()
     with open(os.path.join(dir_loc, 'experiments.yaml'), 'r') as fp:
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     reward_scaler = config_dict['reward_scaler']
     evaluate_on_environment = config_dict['evaluate_on_environment']
     default_loc = os.path.join(data_loc, config_dict['default_loc'], env_name)
-    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'], env_name, str(args.iter))
+    training_dataset_loc = os.path.join(data_loc, config_dict['training_dataset_loc'], env_name)
 
     # env specific configs
     reward_on_steady = config_dict.get('reward_on_steady', None)
@@ -106,17 +106,19 @@ if __name__ == "__main__":
         env = get_env(env_name)
         
         dataset = None
-        for file_loc in os.listdir(training_dataset_loc):
-            data_loc = os.path.join(training_dataset_loc, file_loc)
-            print("loading data in", data_loc)  
-            _dataset = d3rlpy.dataset.MDPDataset.load(data_loc)
-            if dataset is None: dataset = _dataset
-            else: dataset.extend(_dataset)
-        assert dataset is not None, "trainning data is empty"
+        for _iter in range(args.iter+1):
+            _training_dataset_loc = os.path.join(training_dataset_loc, str(_iter))
+            for file_loc in os.listdir(_training_dataset_loc):
+                data_loc = os.path.join(_training_dataset_loc, file_loc)
+                print("loading data in", data_loc)  
+                _dataset = d3rlpy.dataset.MDPDataset.load(data_loc)
+                if dataset is None: dataset = _dataset
+                else: dataset.extend(_dataset)
+        assert dataset is not None, "training data is empty"
         train_episodes, test_episodes = train_test_split(dataset.episodes)
         feeded_episodes = train_episodes
         eval_feeded_episodes = test_episodes
-        print(dataset.actions[:100])
+        print(dataset.actions[:10])
         
         for algo_name in args.algo.split(","):
             prev_evaluate_on_environment_scorer = float('-inf')
@@ -126,7 +128,8 @@ if __name__ == "__main__":
 
             scaler = d3rlpy.preprocessing.MinMaxScaler(dataset)
             action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(dataset)
-            reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=1.0)
+            # reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=1.0)
+            reward_scaler = d3rlpy.preprocessing.StandardRewardScaler(dataset)
             encoder_factory = d3rlpy.models.encoders.DefaultEncoderFactory(activation="tanh", dropout_rate=0.3)
             optim_factory=d3rlpy.models.optimizers.AdamFactory(optim_cls='Adam', betas=(0.9, 0.999), eps=1e-08, weight_decay=0.1, amsgrad=False)
 
@@ -278,6 +281,8 @@ if __name__ == "__main__":
                     logdir=logdir,
                     callback=online_saving_callback)
             else:
+                best_ckpt = os.path.join(acutal_dir, 'best.pt')
+                if args.iter > 0 and os.path.exists(best_ckpt): curr_algo.load_model(best_ckpt)
                 for epoch, metrics in curr_algo.fitter(feeded_episodes, eval_episodes=eval_feeded_episodes, n_epochs=N_EPOCHS, with_timestamp=False, logdir=logdir, scorers=scorers):
                     # done = False
                     # observation = env.reset()

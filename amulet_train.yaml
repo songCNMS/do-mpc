@@ -1,4 +1,4 @@
-description: RL4Con Trainning
+description: RL4Con training
 
 target:
   service: sing
@@ -37,10 +37,10 @@ jobs:
 - name: train_MOPOCQLSAC
   sku: G1
   command:
-  - python trainning_batch.py --algo MOPO,CQL,SAC --amlt
+  - python training_batch.py --algo MOPO,CQL,SAC --amlt
 
 - name: train_AWACTD3PlusBC
   sku: G1
   command:
-  - python trainning_batch.py --algo TD3PlusBC,AWAC --amlt
+  - python training_batch.py --algo TD3PlusBC,AWAC --amlt
 
