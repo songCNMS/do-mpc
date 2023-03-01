@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/mnt/lesong/do-mpc")
+
 import gym
 import os
 import numpy as np
@@ -17,7 +20,7 @@ from examples.batch_reactor.template_model import template_model
 from examples.batch_reactor.template_mpc import template_mpc
 from examples.batch_reactor.template_simulator import template_simulator
 
-from gym_env_wrapper import get_env
+from mpc_env.gym_env_wrapper import get_env
 from mpc_policy import get_mpc_controller, get_noisy_rl_policy
 from algo_evaluation import OfflineRLModel
 

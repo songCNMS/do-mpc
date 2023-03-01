@@ -1,6 +1,6 @@
 import sys
 import os
-
+import torch
 import d3rlpy
 import json
 
@@ -16,7 +16,7 @@ import shutil
 from datetime import datetime
 import re
 import copy
-from gym_env_wrapper import get_env
+from mpc_env.gym_env_wrapper import get_env
 import argparse
 from sklearn.model_selection import train_test_split
 from mpc_policy import get_mpc_controller
@@ -27,6 +27,7 @@ class LinearDecayEpsilonMPC(d3rlpy.online.explorers.LinearDecayEpsilonGreedy):
     def __init__(
         self,
         mpc_policy,
+        action_scaler,
         start_epsilon: float = 1.0,
         end_epsilon: float = 0.1,
         duration: int = 1000000,
@@ -34,13 +35,21 @@ class LinearDecayEpsilonMPC(d3rlpy.online.explorers.LinearDecayEpsilonGreedy):
         super().__init__(start_epsilon=start_epsilon,
                          end_epsilon=end_epsilon,
                          duration=duration)
+        self.action_scaler = action_scaler
         self.mpc_policy = mpc_policy
 
     def sample(self, algo, x, step):
         greedy_actions = algo.predict(x)
         mpc_actions = self.mpc_policy.predict(x)
+        greedy_actions = np.nan_to_num(greedy_actions, nan=0.0, posinf=0.0, neginf=0.0)
+        mpc_actions = np.nan_to_num(mpc_actions, nan=0.0, posinf=0.0, neginf=0.0)
         is_random = np.random.random(x.shape[0]) < self.compute_epsilon(step)
-        return np.where(is_random, mpc_actions, greedy_actions)
+        actions = np.where(is_random, mpc_actions, greedy_actions)
+        if np.isnan(actions).any():
+            print("actions: ", actions)
+            print("x: ", x)
+            sys.exit(0)
+        return actions
 
 
 
@@ -149,11 +158,17 @@ if __name__ == "__main__":
             global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
             ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = float('-inf')
 
-            scaler = d3rlpy.preprocessing.MinMaxScaler(dataset)
-            action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(dataset)
-            # reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset, multiplier=1.0)
-            reward_scaler = d3rlpy.preprocessing.StandardRewardScaler(dataset)
-            encoder_factory = d3rlpy.models.encoders.DefaultEncoderFactory(activation="tanh", dropout_rate=0.3)
+            if args.online:
+                # scaler = d3rlpy.preprocessing.MinMaxScaler(maximum=env.max_observation, minimum=env.min_observation)
+                # action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(maximum=env.max_actions, minimum=env.min_actions)
+                scaler = None
+                action_scaler = None
+                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(minimum=-4.0, maximum=0.0)
+            else:
+                scaler = d3rlpy.preprocessing.MinMaxScaler(dataset)
+                action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(dataset)
+                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(minimum=-4.0, maximum=0.0)
+            encoder_factory = d3rlpy.models.encoders.VectorEncoderFactory(activation="relu", dropout_rate=0.0, hidden_units=[128,128], use_dense=True)
             optim_factory=d3rlpy.models.optimizers.AdamFactory(optim_cls='Adam', betas=(0.9, 0.999), eps=1e-08, weight_decay=0.1, amsgrad=False)
 
             if algo_name == 'CQL':
@@ -186,14 +201,16 @@ if __name__ == "__main__":
                 curr_algo = d3rlpy.algos.BEAR(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
             elif algo_name == 'SAC':
                 curr_algo = d3rlpy.algos.SAC(use_gpu=use_gpu, batch_size = BATCH_SIZE, 
-                                             actor_learning_rate=0.001, 
-                                             critic_learning_rate=0.003, 
+                                             actor_learning_rate=0.0001, 
+                                             critic_learning_rate=0.0003, 
                                              temp_learning_rate=0.001, 
                                              alpha_learning_rate=0.001,
                                              scaler = scaler, action_scaler=action_scaler, 
                                              reward_scaler=reward_scaler,
                                              actor_encoder_factory=encoder_factory, 
-                                             critic_encoder_factory=encoder_factory)
+                                             critic_encoder_factory=encoder_factory,
+                                             actor_optim_factory=optim_factory,
+                                             critic_optim_factory=optim_factory)
             elif algo_name == 'BCQ':
                 curr_algo = d3rlpy.algos.BCQ(use_gpu=use_gpu, batch_size = BATCH_SIZE, scaler = scaler, action_scaler=action_scaler, reward_scaler=reward_scaler)
             elif algo_name == 'CRR':
@@ -206,7 +223,9 @@ if __name__ == "__main__":
                                               action_scaler=action_scaler, 
                                               reward_scaler=reward_scaler,
                                               actor_encoder_factory=encoder_factory, 
-                                              critic_encoder_factory=encoder_factory)
+                                              critic_encoder_factory=encoder_factory,
+                                              actor_optim_factory=optim_factory,
+                                              critic_optim_factory=optim_factory)
             elif algo_name == 'COMBO':
                 dynamics = 1
             #     dynamics = d3rlpy.dynamics.ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=use_gpu)
@@ -221,7 +240,7 @@ if __name__ == "__main__":
             
             logdir = f"{default_loc}/{args.exp}_{seed}/"
             actual_dir = logdir+'/'+algo_name
-            if os.path.exists(logdir): shutil.rmtree(logdir)
+            if os.path.exists(actual_dir): shutil.rmtree(actual_dir)
             os.makedirs(logdir, exist_ok=True)
             if algo_name in ['COMBO', 'MOPO']:
                 scorers={
@@ -234,7 +253,7 @@ if __name__ == "__main__":
                 dynamics.fit(feeded_episodes,
                     eval_episodes=eval_feeded_episodes,
                     n_epochs=DYNAMICS_N_EPOCHS,
-                    logdir=logdir,
+                    logdir=actual_dir,
                     scorers=scorers)
                 if algo_name == 'COMBO':
                     curr_algo = d3rlpy.algos.COMBO(dynamics=dynamics, use_gpu=use_gpu, 
@@ -285,14 +304,14 @@ if __name__ == "__main__":
                 def online_saving_callback(algo, epoch, total_step):
                     mean_env_ret = d3rlpy.metrics.evaluate_on_environment(env, n_trials=2, epsilon=0.0)(algo)
                     global ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER
-                    if mean_env_ret < ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER:
+                    if mean_env_ret > ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER:
                         ONLINE_PREV_EVALUATE_ON_ENVIRONMENT_SCORER = mean_env_ret
-                        curr_algo.save_model(os.path.join(actual_dir, 'best_env.pt'))
+                        curr_algo.save_model(os.path.join(logdir, 'best_env.pt'))
 
 
                 mpc_policy = get_mpc_controller(env)
                 # explorer = d3rlpy.online.explorers.LinearDecayEpsilonGreedy(start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
-                explorer = LinearDecayEpsilonMPC(mpc_policy, start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
+                explorer = LinearDecayEpsilonMPC(mpc_policy, action_scaler, start_epsilon=explorer_start_epsilon, end_epsilon=explorer_end_epsilon, duration=explorer_duration)
                 buffer = d3rlpy.online.buffers.ReplayBuffer(maxlen=buffer_maxlen, env=env)
                 
                 curr_algo.fit_online(env, buffer, explorer=explorer, # you don't need this with probablistic policy algorithms
@@ -304,8 +323,8 @@ if __name__ == "__main__":
                     random_steps=online_random_steps,
                     save_interval=online_save_interval,
                     with_timestamp=False,
-                    tensorboard_dir=logdir+'/tensorboard',
-                    logdir=logdir,
+                    tensorboard_dir=actual_dir+'/tensorboard',
+                    logdir=actual_dir,
                     callback=online_saving_callback)
             else:
                 best_ckpt = os.path.join(actual_dir, 'best.pt')

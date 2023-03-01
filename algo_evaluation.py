@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/mnt/lesong/do-mpc")
+
 import d3rlpy
 import json
 import numpy as np
@@ -15,7 +18,7 @@ import codecs
 import os
 import sys
 import torch
-from gym_env_wrapper import get_env
+from mpc_env.gym_env_wrapper import get_env
 from mpc_policy import get_mpc_controller, MPCPolicy
 import matplotlib.pyplot as plt
 from tqdm import tqdm

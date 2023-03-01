@@ -14,7 +14,7 @@ explorer_end_epsilon: 0.1
 explorer_duration: 20000
 N_EPOCHS: 1000
 n_steps_per_epoch: 100
-online_random_steps: 600
+online_random_steps: 100
 online_update_interval: 512
 online_save_interval: 1024
 
