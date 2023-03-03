@@ -110,9 +110,9 @@ class ControlEnv(gym.Env):
 
 
 def get_batch_reactor_env():
-    from ..examples.batch_reactor.template_model import template_model
-    from ..examples.batch_reactor.template_mpc import template_mpc
-    from ..examples.batch_reactor.template_simulator import template_simulator, reward_function
+    from examples.batch_reactor.template_model import template_model
+    from examples.batch_reactor.template_mpc import template_mpc
+    from examples.batch_reactor.template_simulator import template_simulator, reward_function
     model = template_model()
     simulator = template_simulator(model)
     estimator = do_mpc.estimator.StateFeedback(model)
@@ -188,9 +188,9 @@ def get_CSTR_env():
 
 
 def get_IPR_env():
-    from ..examples.industrial_poly.template_model import template_model
-    from ..examples.industrial_poly.template_mpc import template_mpc
-    from ..examples.industrial_poly.template_simulator import template_simulator, reward_function
+    from examples.industrial_poly.template_model import template_model
+    from examples.industrial_poly.template_mpc import template_mpc
+    from examples.industrial_poly.template_simulator import template_simulator, reward_function
     model = template_model()
     simulator = template_simulator(model)
     estimator = do_mpc.estimator.StateFeedback(model)
@@ -220,15 +220,17 @@ def get_IPR_env():
     estimator.x0 = x0
     mpc.x0 = x0
 
-    min_observation = np.array([0.0, 0.0, 26.0, 363.15 - temp_range, 298.0, 298.0, 288.0, 288.0, 0.0, -10000.0])
+    min_observation = np.array([0.0, 0.0, 26.0, 363.15-temp_range, 298.0, 298.0, 288.0, 288.0, 0.0, -10000.0])
     max_observation = np.array([15000.0, 1000.0, 36.0, 363.15+1.2*temp_range, 400.0, 400.0, 400.0, 400.0, 30000.0, 100000.0])
     min_actions = np.array([0.0, 333.15, 333.15])
     max_actions = np.array([3.0e4, 373.15, 373.15])
     
+    init_state = np.array([10000.0, 853.0, 26.5, 90.0 + 273.15, 90.0 + 273.15, 90.0 + 273.15, 35.0 + 273.15, 35.0 + 273.15, 300.0, 359.144])
     def init_obs_space(seed):
-        init_state = np.array([10000.0, 853.0, 26.5, 90.0 + 273.15, 90.0 + 273.15, 90.0 + 273.15, 35.0 + 273.15, 35.0 + 273.15, 300.0, T_adiab])
         init_min_observation = init_state*0.95
         init_max_observation = init_state*1.05
+        init_min_observation = IPR_obs_refactor(init_min_observation)
+        init_max_observation = IPR_obs_refactor(init_max_observation)
         observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
         observation_space.seed(seed)
         return observation_space
@@ -238,7 +240,7 @@ def get_IPR_env():
                      min_actions, max_actions,
                      reward_function,
                      init_obs_space=init_obs_space,
-                     steady_observation=x0,
+                     steady_observation=init_state,
                      error_reward=-1000,
                      obs_refactor=IPR_obs_refactor)
     env.reset()

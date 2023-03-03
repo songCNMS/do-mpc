@@ -63,10 +63,10 @@ def template_simulator(model):
 
 
 def reward_function(cur_step, simulator_data):
-    reward = simulator_data["_x", "m_P"][-1, 0]
-    reward -= 1e4*max(0, simulator_data['_x', 'T_R'][-1, 0]-365.15)
+    reward = simulator_data["_x", "m_P"][-1, 0] / 10.0
+    reward -= max(0, simulator_data['_x', 'T_R'][-1, 0]-365.15)
     if cur_step > 0:
-        reward -= 0.002*(simulator_data['_u', 'm_dot_f'][-2, 0] - simulator_data['_u', 'm_dot_f'][-1, 0])**2
-        reward -= 0.004*(simulator_data['_u', 'T_in_M'][-2, 0] - simulator_data['_u', 'T_in_M'][-1, 0])**2
-        reward -= 0.002*(simulator_data['_u', 'T_in_EK'][-2, 0] - simulator_data['_u', 'T_in_EK'][-1, 0])**2
+        reward -= abs(simulator_data['_u', 'm_dot_f'][-2, 0] - simulator_data['_u', 'm_dot_f'][-1, 0])/10000.0
+        reward -= abs(simulator_data['_u', 'T_in_M'][-2, 0] - simulator_data['_u', 'T_in_M'][-1, 0])/100.0
+        reward -= abs(simulator_data['_u', 'T_in_EK'][-2, 0] - simulator_data['_u', 'T_in_EK'][-1, 0])/100.0
     return reward

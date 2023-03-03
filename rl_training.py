@@ -253,8 +253,10 @@ if __name__ == "__main__":
                 dynamics.fit(feeded_episodes,
                     eval_episodes=eval_feeded_episodes,
                     n_epochs=DYNAMICS_N_EPOCHS,
-                    logdir=actual_dir,
+                    logdir=logdir,
                     scorers=scorers)
+                # dynamics = d3rlpy.dynamics.ProbabilisticEnsembleDynamics.from_json("d3rlpy_logs/CSTR/random_42/ProbabilisticEnsembleDynamics_20230301130632/params.json")
+                # dynamics.load_model("d3rlpy_logs/CSTR/random_42/ProbabilisticEnsembleDynamics_20230301130632/model_375000.pt")
                 if algo_name == 'COMBO':
                     curr_algo = d3rlpy.algos.COMBO(dynamics=dynamics, use_gpu=use_gpu, 
                                                    scaler = scaler, 

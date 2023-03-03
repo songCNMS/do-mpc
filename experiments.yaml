@@ -1,6 +1,6 @@
 seed: 42
 num_of_seeds: 1
-env_name: 'CSTR' #'batch_reactor', CSTR, IPR
+env_name: 'IPR' #'batch_reactor', CSTR, IPR
 model_name: 'ppo'
 normalize: True
 dense_reward: True
