@@ -287,7 +287,7 @@ if __name__ == "__main__":
             else:
                 with open(os.path.join(dir_loc, "BEST_MODEL.yaml"), 'r') as fp:
                     config_dict = yaml.safe_load(fp)
-                best_model_loc = os.path.join(dir_loc, config_dict['best_loc'])
+                best_model_loc = os.path.join(dir_loc, "d3rlpy_logs", env_name, config_dict['best_loc'])
                 curr_algo = OfflineRLModel(algo_name, best_model_loc)
                 algorithms = [(curr_algo, algo_name)]
             save_dir = os.path.join(plt_dir, env_name, algo_name)
