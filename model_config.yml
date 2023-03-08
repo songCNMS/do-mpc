@@ -2,18 +2,36 @@
 # important packages: do-mpc, d3rlpy, smpl
 
 model:
-  - model_type: continuous/discrete
-  - variables
-    - variable1
-      - type
-      - definition (optional, in case of auxiliary/ variable)
-  - differential equations
-    - equation1
-      - lhs: variable name
-      - rhs: equation, e.g., mu_S*X_s - (u-V_s)*X_s
-    - equation2  
-      - lhs
-      - rhs
+  - model_name: batch_reactor
+  - model_type: continuous
+  - constants:
+    - mu_m: 0.02
+    - K_m: 0.05
+    - K_i: 5.0
+    - v_par: 0.004
+    - Y_p: 1.2
+
+  - state_variables:
+    - X_s: 
+      - rhs: mu_S*X_s - inp/V_s*X_s
+      - shape: (1,) # default value, can be omitted
+    - S_s: 
+      - rhs: mu_S*X_s/Y_x - v_par*X_s/Y_p + inp/V_s*(S_in-S_s)
+    - P_s: 
+      - rhs: v_par*X_s - inp/V_s*P_s
+    - V_s:
+      - rhs: inp
+
+  - control_variables:
+    - inp:
+      - shape: (1,) # default value, can be omitted
+  
+  - user_defined_parameters:
+    - Y_x
+    - S_in
+  - aux_variables:
+    - mu_S: mu_m*S_s/(K_m+S_s+(S_s**2/K_i))
+
 
 simulator:
   parameters:
@@ -21,25 +39,30 @@ simulator:
     - abstol: 1e-10
     - reltol: 1e-10
     - t_step: 1.0
-    - total_steps: 50
+  
+  total_steps: 50
 
   reward:
-    - observation
-      - distance to steady
-        - norm
-        - coefficiency
-      - distance to previous
-        - norm
-        - coefficiency
-      - customize
-    - action
-      - distance to steady
-        - norm
-        - coefficiency
-      - distance to previous
-        - norm
-        - coefficiency
-      - customize
+    - observation:
+      - distance_to_steady:
+        - norm: L1
+        - coef: 0.1
+      - distance_to_previous:
+        - norm: L1
+        - coef: 0.1
+      - abs_val:
+        - variable: P_s
+        - coef: 0.1
+    - action:
+      - distance_to_steady:
+        - norm: L1
+        - coef: 0.1
+      - distance_to_previous:
+        - norm: L1
+        - coef: 0.1
+      - abs_val:
+        - variable: P_s
+        - coef: 0.1
 
   model_parameters:
     - state/control variable:
