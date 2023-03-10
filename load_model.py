@@ -31,16 +31,16 @@ def template_model(symvar_type='SX'):
     if "state_variables" in config["model"]:
         model_str += "    # States struct (optimization variables) \n"
         for key, val in config['model']['state_variables'].items():
-            shape = val.get("shape", (1,))
-            model_str += f"    {key} = model.set_variable('_x', '{key}', shape={shape}) \n"
-            assert "rhs" in val, "rhs must be given for each state variable"
-            model_str += f"    model.set_rhs('{key}', {val['rhs']}) \n"
+            shape = val.get("shape", "(1,)")
+            if shape == "(1,)": model_str += f"    {key} = model.set_variable('_x', '{key}') \n"
+            else: model_str += f"    {key} = model.set_variable('_x', '{key}', shape={shape}) \n"
             
     if "control_variables" in config["model"]:
         model_str += "    # Input struct (optimization variables) \n"
         for key, val in config['model']['control_variables'].items():
-            shape = val.get("shape", (1,))
-            model_str += f"    {key} = model.set_variable('_u', '{key}', shape={shape}) \n"
+            shape = val.get("shape", "(1,)")
+            if shape == "(1,)": model_str += f"    {key} = model.set_variable('_u', '{key}') \n"
+            else: model_str += f"    {key} = model.set_variable('_u', '{key}', shape={shape}) \n"
     
     if "user_defined_parameters" in config["model"]:
         for val in config['model']['user_defined_parameters']:
@@ -49,6 +49,11 @@ def template_model(symvar_type='SX'):
     if "aux_variables" in config["model"]:
         for key, val in config['model']['aux_variables'].items():
             model_str += f"    {key} = {val} \n"
+            
+    if "state_variables" in config["model"]:
+        for key, val in config['model']['state_variables'].items():
+            assert "rhs" in val, "rhs must be given for each state variable"
+            model_str += f"    model.set_rhs('{key}', {val['rhs']}) \n"
 
     model_str += "    model.setup() \n"
     model_str += "    return model"
@@ -82,6 +87,7 @@ def template_simulator(model):
     simulator_str += f"    def p_fun(t_now):\n"
     for key, vals in p_values.items():
         simulator_str += f"        p_num['{key}']=np.random.choice({key}_values) \n"
+    simulator_str += f"        return p_num \n"
         
     simulator_str += f"    simulator.set_p_fun(p_fun)\n"
     simulator_str += f"    simulator.setup()\n"
@@ -112,24 +118,26 @@ def template_mpc(model):
     p_values = config["mpc"]["uncertainities"]
     for key, vals in p_values.items():
         mpc_str += f"    {key}_values = np.array({vals}) \n"
-        
+    
+    mterm = ""
     if "step_reward" in config["reward"]:
-        mterm = ""
         for key, vals in config["reward"]["step_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
             mterm += f"-{vals['coef']}*{expr}"
-        if mterm != "":
-            mpc_str += f"    mterm={mterm} \n"
-            mpc_str += "    mpc.set_objective(mterm=mterm) \n"
             
     if "terminal_reward" in config["reward"]:
         lterm = ""
         for key, vals in config["reward"]["terminal_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
             lterm += f"-{vals['coef']}*{expr}"
-        if lterm != "":
-            mpc_str += f"    lterm={lterm} \n"
-            mpc_str += "    mpc.set_objective(lterm=lterm) \n"
+    objective_str = ""
+    if mterm != "": 
+        mpc_str += f"    mterm={mterm} \n"
+        objective_str += f"mterm={mterm}, "
+    if lterm != "": 
+        objective_str += f"lterm={lterm}"
+        mpc_str += f"    lterm={lterm} \n"
+    mpc_str += f"    mpc.set_objective({objective_str}) \n"
     
     if "input_reward" in config["reward"]:
         rterm = ",".join([f"{key}={val}" for key, val in config["reward"]["input_reward"].items()])
