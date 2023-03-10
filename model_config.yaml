@@ -1,0 +1,93 @@
+# A template to be refined
+# important packages: do-mpc, d3rlpy, smpl
+
+model:
+  model_name: batch_reactor_test
+  model_type: continuous
+  constants:
+    mu_m: 0.02
+    K_m: 0.05
+    K_i: 5.0
+    v_par: 0.004
+    Y_p: 1.2
+
+  state_variables:
+    X_s: 
+      init_val: 1.0
+      rhs: mu_S*X_s - inp/V_s*X_s
+      shape: (1,) # default value, can be omitted
+      scaling: 1 # default value, can be omitted
+    S_s: 
+      init_val: 0.5
+      rhs: mu_S*X_s/Y_x - v_par*X_s/Y_p + inp/V_s*(S_in-S_s)
+    P_s:
+      init_val: 0.0
+      rhs: v_par*X_s - inp/V_s*P_s
+    V_s:
+      init_val: 120.0
+      rhs: inp
+
+  control_variables:
+    inp:
+      shape: (1,) # default value, can be omitted
+  
+  user_defined_parameters:
+    - Y_x
+    - S_in
+  aux_variables:
+    mu_S: mu_m*S_s/(K_m+S_s+(S_s**2/K_i))
+
+
+simulator:
+  parameters:
+    integration_tool: 'cvodes'
+    abstol: 1.0e-10
+    reltol: 1.0e-10
+    t_step: 1.0
+  
+reward:
+  step_reward:
+    P_s:
+      expr: P_s
+      coef: 1.0
+  terminal_reward: 
+    P_s:
+      expr: P_s
+      coef: 1.0
+  input_reward:
+    inp: 1.0
+
+
+mpc:
+  setup:
+    n_horizon: 20
+    n_robust: 0
+    open_loop: 0
+    t_step: 1.0
+    state_discretization: collocation
+    collocation_type: radau
+    collocation_deg: 2
+    collocation_ni: 2
+    store_full_solution: True
+  bounds:
+    X_s:
+      lower: 0.0
+      upper: 3.7
+      soft: False # default, can be omitted
+    S_s:
+      lower: -0.01
+    P_s:
+      lower: 0.0
+      upper: 3.0
+    V_s:
+      lower: 0.0
+    inp:
+      lower: 0.0
+      upper: 0.2
+  uncertainities:
+    Y_x: [0.5, 0.4, 0.3]
+    S_in: [200.0, 220.0, 180.0]
+    
+estimator:
+  estimator type: StateFeedback/EKF(Extended Kalman Filter)/MHE(Moving Horizon Estimation)
+  parameters: null
