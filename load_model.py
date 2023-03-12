@@ -46,9 +46,11 @@ def template_model(symvar_type='SX'):
         for val in config['model']['user_defined_parameters']:
             model_str += f"    {val} = model.set_variable('_p', '{val}') \n"
     
+    # T_dif = model.set_expression(expr_name='T_dif', expr=T_R-T_K)
     if "aux_variables" in config["model"]:
         for key, val in config['model']['aux_variables'].items():
-            model_str += f"    {key} = {val} \n"
+            if val.get("is_explicit", False): model_str += f"    {key}=model.set_expression(expr_name='{key}', expr={val['expr']}) \n"
+            else: model_str += f"    {key}={val['expr']} \n"
             
     if "state_variables" in config["model"]:
         for key, val in config['model']['state_variables'].items():
@@ -133,9 +135,9 @@ def template_mpc(model):
     objective_str = ""
     if mterm != "": 
         mpc_str += f"    mterm={mterm} \n"
-        objective_str += f"mterm={mterm}, "
+        objective_str += "mterm=mterm, "
     if lterm != "": 
-        objective_str += f"lterm={lterm}"
+        objective_str += "lterm=lterm"
         mpc_str += f"    lterm={lterm} \n"
     mpc_str += f"    mpc.set_objective({objective_str}) \n"
     
@@ -143,7 +145,6 @@ def template_mpc(model):
         rterm = ",".join([f"{key}={val}" for key, val in config["reward"]["input_reward"].items()])
         mpc_str += f"    mpc.set_rterm({rterm}) \n"
 
-    # mpc.scaling['_x', 'T_R'] = 100
     if "scaling" in config["mpc"]:
         for key, val in config["mpc"]["scaling"].items():
             type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
@@ -154,12 +155,13 @@ def template_mpc(model):
             type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
             for bound_str in ["lower", "upper"]:
                 if bound_str in vals:
-                    if ("soft" not in vals) or (not vals["soft"]):
+                    if bound_str == "lower" or ("soft" not in vals) or (not vals["soft"]):
+                        type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
                         mpc_str += f"    mpc.bounds['{bound_str}', '{type_str}', '{key}'] = {vals[bound_str]} \n"
                     else: 
                         coef = vals.get("coef", 1.0)
-                        short_bound_str=("ub" if bound_str=="upper" else "lb")
-                        mpc_str += f"     mpc.set_nl_cons('{key}', {type_str}['{key}'], {short_bound_str}={vals[bound_str]}, soft_constraint=True, penalty_term_cons={coef}) \n"
+                        type_str = ("model.x" if key in config["model"]["state_variables"] else "model.u")
+                        mpc_str += f"    mpc.set_nl_cons('{key}', {type_str}['{key}'], ub={vals[bound_str]}, soft_constraint=True, penalty_term_cons={coef}) \n"
     
     if "uncertainities" in config["mpc"]:
         for key, val in config["mpc"]["uncertainities"].items():
@@ -180,8 +182,7 @@ def generate_reward_function(config):
 
 if __name__ == "__main__":
 
-    config = load_yaml_config("model_config.yaml")
-    print(config["model"]["user_defined_parameters"])
+    config = load_yaml_config("model_config_cstr.yaml")
     model_name = config["model"]["model_name"]
     dir_loc = f"examples/{model_name}"
     os.makedirs(dir_loc, exist_ok=True)

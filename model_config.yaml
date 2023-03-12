@@ -35,7 +35,8 @@ model:
     - Y_x
     - S_in
   aux_variables:
-    mu_S: mu_m*S_s/(K_m+S_s+(S_s**2/K_i))
+    mu_S: 
+      expr: mu_m*S_s/(K_m+S_s+(S_s**2/K_i))
 
 
 simulator:
