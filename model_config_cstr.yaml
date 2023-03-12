@@ -1,0 +1,134 @@
+# A template to be refined
+# important packages: do-mpc, d3rlpy, smpl
+
+model:
+  model_name: cstr_test
+  model_type: continuous
+  constants:
+    K0_ab: 1.287e+12 # K0 [h^-1]
+    K0_bc: 1.287e+12 # K0 [h^-1]
+    K0_ad: 9.043e+9 # K0 [l/mol.h]
+    R_gas: 8.3144621e-3 # Universal gas constant
+    E_A_ab: 9758.3 #* R_gas# [kj/mol]
+    E_A_bc: 9758.3 #* R_gas# [kj/mol]
+    E_A_ad: 8560.0 #* R_gas# [kj/mol]
+    H_R_ab: 4.2 # [kj/mol A]
+    H_R_bc: -11.0 # [kj/mol B] Exothermic
+    H_R_ad: -41.85 # [kj/mol A] Exothermic
+    Rou: 0.9342 # Density [kg/l]
+    Cp: 3.01 # Specific Heat capacity [kj/Kg.K]
+    Cp_k: 2.0 # Coolant heat capacity [kj/kg.k]
+    A_R: 0.215 # Area of reactor wall [m^2]
+    V_R: 10.01 #0.01 # Volume of reactor [l]
+    m_k: 5.0 # Coolant mass[kg]
+    T_in: 130.0 # Temp of inflow [Celsius]
+    K_w: 4032.0 # [kj/h.m^2.K]
+    C_A0: 5.1
+
+  state_variables:
+    C_a: 
+      init_val: [0.8]
+      rhs: F*(C_A0 - C_a) -K_1*C_a - K_3*(C_a**2)
+      shape: (1,1) # default value, can be omitted
+      scaling: 1 # default value, can be omitted
+    C_b: 
+      init_val: [0.5]
+      shape: (1,1)
+      rhs: -F*C_b + K_1*C_a - K_2*C_b
+    T_R:
+      init_val: [134.14]
+      shape: (1,1)
+      rhs: ((K_1*C_a*H_R_ab + K_2*C_b*H_R_bc + K_3*(C_a**2)*H_R_ad)/(-Rou*Cp)) + F*(T_in-T_R) +(((K_w*A_R)*(-T_dif))/(Rou*Cp*V_R))
+    T_K:
+      init_val: [130.0]
+      shape: (1,1)
+      rhs: (Q_dot + K_w*A_R*(T_dif))/(m_k*Cp_k)
+
+  control_variables:
+    F:
+      shape: (1,) # default value, can be omitted
+    Q_dot:
+      shape: (1,)
+
+  user_defined_parameters:
+    - alpha
+    - beta
+
+  aux_variables:
+    T_dif: 
+      expr: T_R-T_K
+      is_explicit: True
+    K_1: 
+      expr: beta * K0_ab * exp((-E_A_ab)/((T_R+273.15)))
+    K_2: 
+      expr: K0_bc * exp((-E_A_bc)/((T_R+273.15)))
+    K_3: 
+      expr: K0_ad * exp((-alpha*E_A_ad)/((T_R+273.15)))
+
+
+simulator:
+  parameters:
+    integration_tool: 'cvodes'
+    abstol: 1.0e-10
+    reltol: 1.0e-10
+    t_step: 0.005
+  
+reward:
+  step_reward:
+    C_b:
+      expr: (C_b-0.6)**2
+      coef: 1.0
+  terminal_reward: 
+    C_b:
+      expr: (C_b-0.6)**2
+      coef: 1.0
+  input_reward:
+    F: 0.1
+    Q_dot: 1.0e-3
+
+
+mpc:
+  setup:
+    n_horizon: 50
+    n_robust: 1
+    open_loop: 0
+    t_step: 0.005
+    state_discretization: collocation
+    collocation_type: radau
+    collocation_deg: 2
+    collocation_ni: 1
+    store_full_solution: True
+  scaling:
+    T_R: 100
+    T_K: 100
+    Q_dot: 2000
+    F: 100
+  bounds:
+    C_a:
+      lower: 0.1
+      upper: 2.0
+      soft: False # default, can be omitted
+    C_b:
+      lower: 0.1
+      upper: 2.0
+    T_R:
+      lower: 50.0
+      upper: 140.0
+      soft: True
+      coef: 100.0
+    T_K:
+      lower: 50.0
+      upper: 140.0
+    F:
+      lower: 5.0
+      upper: 100.0
+    Q_dot:
+      lower: -8500.0
+      upper: 0.0
+  uncertainities:
+    alpha: [1., 1.05, 0.95]
+    beta: [1., 1.1, 0.9]
+    
+estimator:
+  estimator type: StateFeedback/EKF(Extended Kalman Filter)/MHE(Moving Horizon Estimation)
+  parameters: null
