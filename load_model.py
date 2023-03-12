@@ -143,6 +143,12 @@ def template_mpc(model):
         rterm = ",".join([f"{key}={val}" for key, val in config["reward"]["input_reward"].items()])
         mpc_str += f"    mpc.set_rterm({rterm}) \n"
 
+    # mpc.scaling['_x', 'T_R'] = 100
+    if "scaling" in config["mpc"]:
+        for key, val in config["mpc"]["scaling"].items():
+            type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
+            mpc_str += f"    mpc.scaling['{type_str}', '{key}'] = {val} \n"
+
     if "bounds" in config["mpc"]:
         for key, vals in config["mpc"]["bounds"].items():
             type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
