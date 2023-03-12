@@ -60,6 +60,7 @@ model:
       is_explicit: True
     K_1: 
       expr: beta * K0_ab * exp((-E_A_ab)/((T_R+273.15)))
+      is_explicit: False # default value, can be omitted
     K_2: 
       expr: K0_bc * exp((-E_A_bc)/((T_R+273.15)))
     K_3: 
@@ -77,11 +78,11 @@ reward:
   step_reward:
     C_b:
       expr: (C_b-0.6)**2
-      coef: 1.0
+      coef: -1.0
   terminal_reward: 
     C_b:
       expr: (C_b-0.6)**2
-      coef: 1.0
+      coef: -1.0
   input_reward:
     F: 0.1
     Q_dot: 1.0e-3

@@ -13,11 +13,6 @@ import matplotlib.gridspec as gridspec
 import time
 
 
-# Reward Function
-# 1. distance between current state and steady state
-# 2. distance between current state and the previous state
-# 3. distance between current action and the previous action
-
 
 # TODO: historical observations in the state
 class ControlEnv(gym.Env):
@@ -70,10 +65,6 @@ class ControlEnv(gym.Env):
         return self.reward_function(self.cur_step, self.simulator.data)
         
     def step(self, action):
-        if np.isnan(action).any() or np.isnan(self.state).any():
-            print(action, self.state)
-            sys.exit(0)
-        
         action = action.reshape(self.model._u.shape)
         state_next = self.simulator.make_step(action)
         state_next = self.estimator.make_step(state_next).flatten()
@@ -86,7 +77,6 @@ class ControlEnv(gym.Env):
         if np.isnan(self.state).any() or np.isnan(reward):
             self.state = np.nan_to_num(self.state, nan=0.0, posinf=0.0, neginf=0.0)
             done = True
-            print(self.cur_step, self.state, reward, done, info)
         return self.state, reward, done, info
 
     def reset(self, init_state=None, seed=None):

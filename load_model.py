@@ -94,11 +94,12 @@ def template_simulator(model):
     simulator_str += f"    simulator.set_p_fun(p_fun)\n"
     simulator_str += f"    simulator.setup()\n"
     simulator_str += f"    return simulator"
+    
+    simulator_str += generate_reward_function(config)
+    
     with open(loc, "w") as f:
         f.write(simulator_str)
     return
-
-
 
 
 def generate_mpc(config, loc):
@@ -125,13 +126,13 @@ def template_mpc(model):
     if "step_reward" in config["reward"]:
         for key, vals in config["reward"]["step_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
-            mterm += f"-{vals['coef']}*{expr}"
+            mterm = f"{-vals['coef']}*{expr}"
             
     if "terminal_reward" in config["reward"]:
         lterm = ""
         for key, vals in config["reward"]["terminal_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
-            lterm += f"-{vals['coef']}*{expr}"
+            lterm += f"{-vals['coef']}*{expr}"
     objective_str = ""
     if mterm != "": 
         mpc_str += f"    mterm={mterm} \n"
@@ -175,14 +176,158 @@ def template_mpc(model):
         f.write(mpc_str)
     return
     
-    
-def generate_reward_function(config):
-    pass
 
+def generate_reward_function(config):
+    reward_str = """
+    
+def reward_function(cur_step, simulator_data):
+"""
+    if "step_reward" in config["reward"]:
+        for key, vals in config["reward"]["step_reward"].items():
+            expr_str = vals["expr"].replace(key, f"simulator_data['_x', '{key}'][-1, 0]")
+            reward_str += f"    reward = {vals['coef']}*{expr_str} \n"
+    if "bounds" in config["mpc"]:
+        for key, vals in config["mpc"]["bounds"].items():
+            type_str = ("_x" if key in config["model"]["state_variables"] else "_u")
+            bound_str = "upper"
+            if bound_str in vals:
+                if vals.get("soft", False):
+                    coef = vals.get("coef", 1.0)
+                    reward_str += f"    reward -= {coef}*max(0, simulator_data['{type_str}', '{key}'][-1, 0]-{vals['upper']}) \n"
+    if "input_reward" in config["reward"]:
+        reward_str += f"    if cur_step > 0:\n"
+        for key, val in config["reward"]["input_reward"].items():
+            reward_str += f"        reward -= {val}*(simulator_data['_u', '{key}'][-1, 0]-simulator_data['_u', '{key}'][-2, 0])**2 \n"
+    reward_str += "    return reward"
+    return reward_str
+
+
+
+
+"""
+def get_CSTR_env():
+    from examples.CSTR.template_model import template_model
+    from examples.CSTR.template_mpc import template_mpc
+    from examples.CSTR.template_simulator import template_simulator, reward_function
+    model = template_model()
+    simulator = template_simulator(model)
+    estimator = do_mpc.estimator.StateFeedback(model)
+    mpc = template_mpc(model)
+    C_a_0 = 0.8 # This is the initial concentration inside the tank [mol/l]
+    C_b_0 = 0.5 # This is the controlled variable [mol/l]
+    T_R_0 = 134.14 #[C]
+    T_K_0 = 130.0 #[C]
+    x0 = np.array([C_a_0, C_b_0, T_R_0, T_K_0]).reshape(-1,1)
+    simulator.x0 = x0
+    estimator.x0 = x0
+    mpc.x0 = x0
+
+    min_observation = np.array([0.1, 0.1, 50.0, 50.0])
+    max_observation = np.array([2.0, 2.0, 150.0, 140.0])
+    min_actions = np.array([5.0, -8500.0])
+    max_actions = np.array([100.0, 0.0])
+    
+    def init_obs_space(seed):
+        init_min_observation = np.array([0.6, 0.3, 125, 125])
+        init_max_observation = np.array([1.0, 0.8, 140, 135])
+        observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
+        observation_space.seed(seed)
+        return observation_space
+    
+    env = ControlEnv(model, simulator, estimator, mpc,
+                    min_observation, max_observation,
+                    min_actions, max_actions,
+                    reward_function,
+                    init_obs_space=init_obs_space,
+                    steady_observation=x0,
+                    error_reward=-1000)
+    env.reset(init_state=x0)
+    return env
+"""
+
+def generate_env(config, loc):
+    env_str = """
+from .template_model import template_model
+from .template_mpc import template_mpc
+from .template_simulator import template_simulator, reward_function
+def get_env():
+    model = template_model()
+    simulator = template_simulator(model)
+    estimator = do_mpc.estimator.StateFeedback(model)
+    mpc = template_mpc(model)
+"""
+    x_list = []
+    min_observation_list, max_observation_list = [], []
+    min_action_list, max_action_list = [], []
+    init_min_observation_list, init_max_observation_list = [], []
+    
+    state_variables_config = config['model']['state_variables']
+    variables_bounds_config = config['mpc']['bounds']
+    state_variables = state_variables_config.keys().tolist()
+    control_variables = state_variables_config.keys().tolist()
+    
+    for key in state_variables:
+        val = state_variables_config[key]
+        env_str += f"    {key}_0={val['init_val']}"
+        x_list.append(key+"_0")
+        init_min_observation_list.append(val['init_val_lower'])
+        init_max_observation_list.append(val['init_val_upper'])
+        val = variables_bounds_config[key]
+        min_observation_list.append(val['lower'])
+        max_observation_list.append(val['upper'])
+    
+    for key in control_variables:
+        val = variables_bounds_config[key]
+        min_action_list.append(val['init_val_lower'])
+        max_action_list.append(val['init_val_upper'])
+            
+    x_list_str = ",".join(x_list)
+    env_str += f"""
+    x0 = np.array([{x_list_str}])
+    simulator.x0 = x0
+    estimator.x0 = x0
+    mpc.x0 = x0
+"""
+    min_observation_str = ",".join([str(v) for v in min_observation_list])
+    max_observation_str = ",".join([str(v) for v in max_observation_list])
+    min_action_str = ",".join([str(v) for v in min_action_list])
+    max_action_str = ",".join([str(v) for v in max_action_list])
+    init_min_observation_str = ",".join([str(v) for v in init_min_observation_list])
+    init_max_observation_str = ",".join([str(v) for v in init_max_observation_list])
+
+    env_str += f"""
+    min_observation = np.array([{min_observation_str}])
+    max_observation = np.array([{max_observation_str}])
+    min_actions = np.array([{min_action_str}])
+    max_actions = np.array([{max_action_str}])
+    
+    def init_obs_space(seed):
+        init_min_observation = np.array([{init_min_observation_str}])
+        init_max_observation = np.array([{init_max_observation_str}])
+        observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
+        observation_space.seed(seed)
+        return observation_space
+    
+    env = ControlEnv(model, simulator, estimator, mpc,
+                    min_observation, max_observation,
+                    min_actions, max_actions,
+                    reward_function,
+                    init_obs_space=init_obs_space,
+                    steady_observation=x0,
+                    error_reward=-1000)
+    env.reset(init_state=x0)
+    return env      
+"""
+
+
+import argparse
 
 if __name__ == "__main__":
-
-    config = load_yaml_config("model_config_cstr.yaml")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--file', type=str, help='config file', required=True)
+    args = parser.parse_args()
+    config = load_yaml_config(args.file)
+    
     model_name = config["model"]["model_name"]
     dir_loc = f"examples/{model_name}"
     os.makedirs(dir_loc, exist_ok=True)

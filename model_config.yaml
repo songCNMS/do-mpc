@@ -14,17 +14,25 @@ model:
   state_variables:
     X_s: 
       init_val: 1.0
+      init_val_lower: 0.9
+      init_val_upper: 1.1
       rhs: mu_S*X_s - inp/V_s*X_s
       shape: (1,) # default value, can be omitted
       scaling: 1 # default value, can be omitted
     S_s: 
       init_val: 0.5
+      init_val_lower: 0.4
+      init_val_upper: 0.6
       rhs: mu_S*X_s/Y_x - v_par*X_s/Y_p + inp/V_s*(S_in-S_s)
     P_s:
       init_val: 0.0
+      init_val_lower: 0.0
+      init_val_upper: 0.2
       rhs: v_par*X_s - inp/V_s*P_s
     V_s:
       init_val: 120.0
+      init_val_lower: 110.0
+      init_val_upper: 130.0
       rhs: inp
 
   control_variables:
@@ -72,16 +80,18 @@ mpc:
     store_full_solution: True
   bounds:
     X_s:
-      lower: 0.0
-      upper: 3.7
+      lower: 0.0 # required
+      upper: 3.7 # required
       soft: False # default, can be omitted
     S_s:
       lower: -0.01
+      upper: 2.0
     P_s:
       lower: 0.0
       upper: 3.0
     V_s:
       lower: 0.0
+      upper: 150.0
     inp:
       lower: 0.0
       upper: 0.2
