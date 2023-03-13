@@ -3,7 +3,7 @@ import os
 import torch
 import d3rlpy
 import json
-
+import importlib
 import numpy as np
 import pandas as pd
 import random
@@ -16,7 +16,6 @@ import shutil
 from datetime import datetime
 import re
 import copy
-from mpc_env.gym_env_wrapper import get_env
 import argparse
 from sklearn.model_selection import train_test_split
 from mpc_policy import get_mpc_controller
@@ -62,7 +61,7 @@ parser.add_argument('--online', action='store_true', help="online learning")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
 parser.add_argument("--iter", type=int, help='iter. num.', default=0)
-# parser.add_argument("--env", type=str, help='env. name', default="CSTR")
+parser.add_argument("--env", type=str, help='env. name', default="CSTR")
 
 # TODO: load previous algorithm before training
 if __name__ == "__main__":
@@ -72,6 +71,8 @@ if __name__ == "__main__":
     seed = config_dict['seed']
     num_of_seeds = config_dict['num_of_seeds']
     env_name = config_dict['env_name']
+    env_lib = importlib.import_module(f"examples.{env_name}.template_env")
+    
     model_name = config_dict['model_name']
     dense_reward = config_dict['dense_reward']
     debug_mode = config_dict['debug_mode']
@@ -135,7 +136,7 @@ if __name__ == "__main__":
         np.random.seed(seed)
         random.seed(seed)
         
-        env = get_env(env_name)
+        env = env_lib.get_env()
         
         dataset = None
         for _iter in range(args.iter+1):

@@ -247,9 +247,17 @@ def get_CSTR_env():
 
 def generate_env(config, loc):
     env_str = """
+import sys
+sys.path.append('../../')
+import do_mpc
+import numpy as np
+import gym
+from mpc_env.gym_env_wrapper import ControlEnv
 from .template_model import template_model
 from .template_mpc import template_mpc
 from .template_simulator import template_simulator, reward_function
+
+
 def get_env():
     model = template_model()
     simulator = template_simulator(model)
@@ -263,12 +271,12 @@ def get_env():
     
     state_variables_config = config['model']['state_variables']
     variables_bounds_config = config['mpc']['bounds']
-    state_variables = state_variables_config.keys().tolist()
-    control_variables = state_variables_config.keys().tolist()
+    state_variables = list(state_variables_config.keys())
+    control_variables = list(config['model']['control_variables'].keys())
     
     for key in state_variables:
         val = state_variables_config[key]
-        env_str += f"    {key}_0={val['init_val']}"
+        env_str += f"    {key}_0={val['init_val']} \n"
         x_list.append(key+"_0")
         init_min_observation_list.append(val['init_val_lower'])
         init_max_observation_list.append(val['init_val_upper'])
@@ -278,8 +286,8 @@ def get_env():
     
     for key in control_variables:
         val = variables_bounds_config[key]
-        min_action_list.append(val['init_val_lower'])
-        max_action_list.append(val['init_val_upper'])
+        min_action_list.append(val['lower'])
+        max_action_list.append(val['upper'])
             
     x_list_str = ",".join(x_list)
     env_str += f"""
@@ -318,6 +326,10 @@ def get_env():
     env.reset(init_state=x0)
     return env      
 """
+    with open(loc, "w") as f:
+        f.write(env_str)
+    return
+
 
 
 import argparse
@@ -335,3 +347,4 @@ if __name__ == "__main__":
     generate_model(config, os.path.join(dir_loc, "template_model.py"))
     generate_simulator(config, os.path.join(dir_loc, "template_simulator.py"))
     generate_mpc(config, os.path.join(dir_loc, "template_mpc.py"))
+    generate_env(config, os.path.join(dir_loc, "template_env.py"))

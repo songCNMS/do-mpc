@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(0, "/mnt/lesong/do-mpc")
-
+import importlib
 import gym
 import os
 import numpy as np
@@ -19,8 +19,6 @@ import time
 from examples.batch_reactor.template_model import template_model
 from examples.batch_reactor.template_mpc import template_mpc
 from examples.batch_reactor.template_simulator import template_simulator
-
-from mpc_env.gym_env_wrapper import get_env
 from mpc_policy import get_mpc_controller, get_noisy_rl_policy
 from algo_evaluation import OfflineRLModel
 
@@ -44,8 +42,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_loc = os.environ['AMLT_DATA_DIR'] if args.amlt else dir_loc
     dataset_dir = os.path.join(data_loc, 'datasets', args.env, str(args.iter))
-
-    env = get_env(args.env)
+    env_lib = importlib.import_module(f"examples.{args.env}.template_env")
+    env = env_lib.get_env()
+    
     episodes_per_batch = 100
     os.makedirs(dataset_dir, exist_ok=True)
     rng = np.random.default_rng(args.seed)
