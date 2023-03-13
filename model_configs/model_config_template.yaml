@@ -1,0 +1,101 @@
+# a template config for smart control
+
+model:
+  model_name: template
+  model_type: continuous # continuous | discrete, required
+  constants: # a list of pairs in form of name: val
+    v1: 100
+    v2: 200
+  
+  state_variables: # a list of state variables and their configs, required
+    sv1: 
+      init_val: [0.8] # a scalar or a vector, required
+      init_val_lower: [0.1] # a scalar or a vector, required
+      init_val_upper: [2.0] # a scalar or a vector, required
+      rhs: v1*sv1+sv2 # an expression string describing its definition, required
+      shape: (1,1) # shape of the value, shall be consistent with init_val, init_val_lower, init_val_upper; default value is (1,), optional
+      scaling: 1 # a scalar, default value is 1, optional
+    sv2: 
+      init_val: [0.5]
+      init_val_lower: [0.1]
+      init_val_upper: [2.0]
+      shape: (1,1)
+      rhs: v2+sv1
+    
+  control_variables: # a list of state variables and their configs, required
+    in1:
+      shape: (1,) # shape of the value, default value is (1,), optional
+    in2:
+      shape: (1,)
+
+  user_defined_parameters: # a list user defined parameters, if any, optional
+    - alpha
+    - beta
+
+  aux_variables: # a list of aux_variables, if any, optional
+    a1: 
+      expr: sv1-sv2 # define the variable, namely, a1 = sv1-sv2, required
+      is_explicit: True # should the variable be monitored 
+    a2: 
+      expr: sv1+sv2
+      is_explicit: False # default value, can be omitted, optional
+   
+
+simulator: # config for simulator, required
+  parameters: # initial parameters, customized, any parameter of the simulator can be defined here, required
+    integration_tool: 'cvodes'
+    abstol: 1.0e-10
+    reltol: 1.0e-10
+    t_step: 0.005
+  
+reward: # how reward is defined, required
+  step_reward: # reward that will be calculated at each step, optional
+    sv1:
+      expr: (sv1-0.6)**2 # define how reward is calculated, required
+      coef: -1.0 # coefficiency of the term in the total reward function, default 1.0, optional
+  terminal_reward: # reward that will be only calculated at the terminal state, optional
+    sv2:
+      expr: (sv2-0.6)**2
+      coef: -1.0
+  input_reward: # define rewards related to input signals, in form of (control variable: coefficiency); the following config defines a reward term 0.1*(a1 - a1')**2 + 1.0e-3*(a2-a2')**2
+    a1: 0.1
+    a2: 1.0e-3
+
+
+mpc: # config for MPC controller, required if MPC policy is needed
+  setup: # any parameters of the MPC controller can be provided here, customized, required
+    n_horizon: 50
+    n_robust: 1
+    open_loop: 0
+    t_step: 0.005
+    state_discretization: collocation
+    collocation_type: radau
+    collocation_deg: 2
+    collocation_ni: 1
+    store_full_solution: True
+  scaling: # define scalings of each variable, if any, optinal
+    sv1: 100
+    sv2: 10
+  bounds: # define bounds of each variable, required
+    sv1:
+      lower: 0.1 # lower bound, required
+      upper: 2.0 # upper bound, requird
+      soft: False # whether the bound is soft or not, default False, optional
+    sv2:
+      lower: 0.1
+      upper: 2.0
+    in1:
+      lower: 50.0
+      upper: 140.0
+      soft: True # if a bound is soft, then coef must be given as well
+      coef: 100.0
+    in2:
+      lower: 50.0
+      upper: 140.0
+  uncertainities: # define a list for each user-defined-parameter from which a value is randomly sampled that will be assinged to the parameter
+    alpha: [1., 1.05, 0.95]
+    beta: [1., 1.1, 0.9]
+    
+estimator:
+  type: StateFeedback # choose from StateFeedback, EKF(Extended Kalman Filter), MHE(Moving Horizon Estimation), required
+  parameters: null # any parameters given to the estimator
