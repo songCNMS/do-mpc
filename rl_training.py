@@ -70,7 +70,8 @@ if __name__ == "__main__":
         config_dict = yaml.safe_load(fp)
     seed = config_dict['seed']
     num_of_seeds = config_dict['num_of_seeds']
-    env_name = config_dict['env_name']
+    # env_name = config_dict['env_name']
+    env_name = args.env
     env_lib = importlib.import_module(f"examples.{env_name}.template_env")
     
     model_name = config_dict['model_name']

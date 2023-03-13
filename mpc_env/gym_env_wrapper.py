@@ -93,7 +93,7 @@ class ControlEnv(gym.Env):
         self.simulator.x0 = init_state
         self.estimator.x0 = init_state
         self.mpc.x0 = init_state
-        self.state = init_state
+        self.state = init_state.flatten()
         self.cur_step = 0
         # self.mpc.set_initial_guess()
         return self.state

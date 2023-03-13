@@ -202,49 +202,6 @@ def reward_function(cur_step, simulator_data):
     return reward_str
 
 
-
-
-"""
-def get_CSTR_env():
-    from examples.CSTR.template_model import template_model
-    from examples.CSTR.template_mpc import template_mpc
-    from examples.CSTR.template_simulator import template_simulator, reward_function
-    model = template_model()
-    simulator = template_simulator(model)
-    estimator = do_mpc.estimator.StateFeedback(model)
-    mpc = template_mpc(model)
-    C_a_0 = 0.8 # This is the initial concentration inside the tank [mol/l]
-    C_b_0 = 0.5 # This is the controlled variable [mol/l]
-    T_R_0 = 134.14 #[C]
-    T_K_0 = 130.0 #[C]
-    x0 = np.array([C_a_0, C_b_0, T_R_0, T_K_0]).reshape(-1,1)
-    simulator.x0 = x0
-    estimator.x0 = x0
-    mpc.x0 = x0
-
-    min_observation = np.array([0.1, 0.1, 50.0, 50.0])
-    max_observation = np.array([2.0, 2.0, 150.0, 140.0])
-    min_actions = np.array([5.0, -8500.0])
-    max_actions = np.array([100.0, 0.0])
-    
-    def init_obs_space(seed):
-        init_min_observation = np.array([0.6, 0.3, 125, 125])
-        init_max_observation = np.array([1.0, 0.8, 140, 135])
-        observation_space = gym.spaces.Box(low=init_min_observation, high=init_max_observation, dtype=np.float32)
-        observation_space.seed(seed)
-        return observation_space
-    
-    env = ControlEnv(model, simulator, estimator, mpc,
-                    min_observation, max_observation,
-                    min_actions, max_actions,
-                    reward_function,
-                    init_obs_space=init_obs_space,
-                    steady_observation=x0,
-                    error_reward=-1000)
-    env.reset(init_state=x0)
-    return env
-"""
-
 def generate_env(config, loc):
     env_str = """
 import sys
@@ -348,3 +305,4 @@ if __name__ == "__main__":
     generate_simulator(config, os.path.join(dir_loc, "template_simulator.py"))
     generate_mpc(config, os.path.join(dir_loc, "template_mpc.py"))
     generate_env(config, os.path.join(dir_loc, "template_env.py"))
+    os.system(f"touch {os.path.join(dir_loc, '__init__.py')}")

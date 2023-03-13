@@ -25,22 +25,33 @@ model:
     K_w: 4032.0 # [kj/h.m^2.K]
     C_A0: 5.1
 
+
+    # min_observation = np.array([0.1, 0.1, 50.0, 50.0])
+    # max_observation = np.array([2.0, 2.0, 150.0, 140.0])
   state_variables:
     C_a: 
       init_val: [0.8]
+      init_val_lower: [0.1]
+      init_val_upper: [2.0]
       rhs: F*(C_A0 - C_a) -K_1*C_a - K_3*(C_a**2)
       shape: (1,1) # default value, can be omitted
       scaling: 1 # default value, can be omitted
     C_b: 
       init_val: [0.5]
+      init_val_lower: [0.1]
+      init_val_upper: [2.0]
       shape: (1,1)
       rhs: -F*C_b + K_1*C_a - K_2*C_b
     T_R:
       init_val: [134.14]
+      init_val_lower: [50.0]
+      init_val_upper: [150.0]
       shape: (1,1)
       rhs: ((K_1*C_a*H_R_ab + K_2*C_b*H_R_bc + K_3*(C_a**2)*H_R_ad)/(-Rou*Cp)) + F*(T_in-T_R) +(((K_w*A_R)*(-T_dif))/(Rou*Cp*V_R))
     T_K:
       init_val: [130.0]
+      init_val_lower: [50.0]
+      init_val_upper: [140.0]
       shape: (1,1)
       rhs: (Q_dot + K_w*A_R*(T_dif))/(m_k*Cp_k)
 
@@ -131,5 +142,5 @@ mpc:
     beta: [1., 1.1, 0.9]
     
 estimator:
-  estimator type: StateFeedback/EKF(Extended Kalman Filter)/MHE(Moving Horizon Estimation)
+  type: StateFeedback # StateFeedback, EKF(Extended Kalman Filter), MHE(Moving Horizon Estimation)
   parameters: null

@@ -100,5 +100,5 @@ mpc:
     S_in: [200.0, 220.0, 180.0]
     
 estimator:
-  estimator type: StateFeedback/EKF(Extended Kalman Filter)/MHE(Moving Horizon Estimation)
+  type: StateFeedback # StateFeedback, EKF(Extended Kalman Filter), MHE(Moving Horizon Estimation)
   parameters: null

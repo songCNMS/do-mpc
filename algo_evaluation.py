@@ -210,6 +210,7 @@ class OfflineRLModel(object):
 
 dir_loc = os.path.dirname(os.path.relpath(__file__))
 import argparse
+import importlib
 parser = argparse.ArgumentParser()
 parser.add_argument('--amlt', action='store_true', help="remote execution on amlt")
 parser.add_argument('--plt', action='store_true', help="whether plot")
@@ -217,7 +218,7 @@ parser.add_argument('--algo', type=str, help='algorithm', default="CQL")
 parser.add_argument('--exp', type=str, help='exp. name', default="random")
 parser.add_argument("--device", type=int, help='device id', default="0")
 parser.add_argument("--num_episodes", type=int, help='num. of episodes', default="1")
-# parser.add_argument('--env', type=str, help='env. name', default="CSTR")
+parser.add_argument('--env', type=str, help='env. name', default="CSTR")
 
 
 
@@ -228,7 +229,10 @@ if __name__ == "__main__":
         config_dict = yaml.safe_load(fp)
     seed = config_dict['seed']
     num_of_seeds = config_dict['num_of_seeds']
-    env_name = config_dict['env_name']
+    # env_name = config_dict['env_name']
+    env_name = args.env
+    env_lib = importlib.import_module(f"examples.{env_name}.template_env")
+
     model_name = config_dict['model_name']
     dense_reward = config_dict['dense_reward']
     debug_mode = config_dict['debug_mode']
@@ -273,7 +277,7 @@ if __name__ == "__main__":
         for i in range(num_of_seeds):
             seeds.append(random.randint(0, 2**32-1))
     
-    env = get_env(env_name)
+    env = env_lib.get_env()
     # algo_names = ['PID', "MPC", 'BC', 'CQL', 'PLAS', 'PLASWithPerturbation', 'BEAR', 'SAC', 'BCQ', 'CRR', 'AWR', 'AWAC', 'DDPG', 'TD3', 'COMBO', 'MOPO']
     algo_names = args.algo.split(",")
     results_csv = ['algo_name', 'on_episodes_reward_mean', 'episodes_reward_std', 'all_reward_mean', 'all_reward_std']
