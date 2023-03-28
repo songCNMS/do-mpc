@@ -40,6 +40,7 @@ def var_num_grid_generator():
                                 min=0,
                                 step=1,
                                 description='Num. Constants:',
+                                style={'description_width': 'initial'},
                                 disabled=False)
 
 
@@ -47,6 +48,7 @@ def var_num_grid_generator():
                                         min=0,
                                         step=1,
                                         description='Num. State Variables:',
+                                        style={'description_width': 'initial'},
                                         disabled=False)
 
 
@@ -55,6 +57,7 @@ def var_num_grid_generator():
                                         min=0,
                                         step=1,
                                         description='Num. Control Variables:',
+                                        style={'description_width': 'initial'},
                                         disabled=False)
 
 
@@ -62,6 +65,7 @@ def var_num_grid_generator():
                                     min=0,
                                     step=1,
                                     description='Num. User Defined Parameters',
+                                    style={'description_width': 'initial'},
                                     disabled=False)
 
 
@@ -69,6 +73,7 @@ def var_num_grid_generator():
                                     min=0,
                                     step=1,
                                     description='Num. Auxiliary Variables:',
+                                    style={'description_width': 'initial'},
                                     disabled=False)
 
     widget_dict = {"model_name": model_name, 
@@ -97,6 +102,7 @@ def constants_grid_generator(num_constants):
             constant_def = Text(value=f"X_{i}",
                                 placeholder=f"X_{i}",
                                 description=f"{i+1}-th Constant Name:",
+                                style={'description_width': 'initial'},
                                 disabled=False)
 
             constant_val = FloatText(value=0.0,
@@ -134,6 +140,7 @@ def state_variables_grid_generator(num_state_variables):
             sv_def = Text(value=f"X_{i}",
                                 placeholder=f"X_{i}",
                                 description=f"{i+1}-th State Variable Name:",
+                                style={'description_width': 'initial'},
                                 disabled=False)
 
             sv_init_val = FloatText(value=0.0,
@@ -205,6 +212,7 @@ def parameters_grid_generator(num_parameters):
             para_def = Text(value=f"Parameter_{i}",
                         placeholder=f"Parameter_{i}",
                         description=f"{i+1}-th Parameter:",
+                        style={'description_width': 'initial'},
                         disabled=False)
             
             para_uncertainties = Text(value="1,2,3",
@@ -235,6 +243,7 @@ def control_variables_grid_generator(num_control_variables):
             cv_def = Text(value=f"In_{i}",
                         placeholder=f"In_{i}",
                         description=f"{i+1}-th Control Variable:",
+                        style={'description_width': 'initial'},
                         disabled=False)
 
             cv_shape = Text(value="(1,)",
@@ -265,6 +274,7 @@ def aux_variable_grid_generator(num_aux_variables):
             av_def = Text(value=f"Aux_Variable_{i}",
                         placeholder=f"Aux_Variable_{i}",
                         description=f"{i+1}-th Aux. Variable:",
+                        style={'description_width': 'initial'},
                         disabled=False)
             
             av_expr = Text(value=f"Expr_{i}",
@@ -296,6 +306,7 @@ def simulator_parameter_grid_generator(num_simulator_parameters):
             sp_def = Text(value=f"Sim_Parameter_{i}",
                         placeholder=f"Sim_Parameter_{i}",
                         description=f"{i+1}-th Parameter of Simulator:",
+                        style={'description_width': 'initial'},
                         disabled=False)
             
             sp_val = Text(value="val",
@@ -392,4 +403,91 @@ def input_rewards_grid_generator(in_names):
 
         grid = layout_generator(input_reward_header, input_rewards_children, num_cols=2, col_width=400)
     
+    return grid, widget_dict
+
+
+
+def MPC_parameter_grid_generator(num_MPC_parameters):
+    widget_dict = {}
+    grid = None
+    if num_MPC_parameters > 0:
+        num_MPC_parameters_children = []
+        num_MPC_parameters_names = []
+        num_MPC_parameters_values = []
+        num_MPC_parameters_header = Button(description='MPC Parameters',
+                        layout=Layout(width='auto', grid_area='header'),
+                        style=ButtonStyle(button_color='lightblue'))
+        for i in range(num_MPC_parameters):
+            mp_def = Text(value=f"MPC_Parameter_{i}",
+                        placeholder=f"MPC_Parameter_{i}",
+                        description=f"{i+1}-th Parameter of MPC:",
+                        style={'description_width': 'initial'},
+                        disabled=False)
+            
+            mp_val = Text(value="val",
+                        placeholder="val",
+                        description="Value:",
+                        disabled=False)
+
+            mp_numeric =  Checkbox(value=False,
+                            description='Numeric',
+                            disabled=False,
+                            indent=False)
+            
+            num_MPC_parameters_names.append(mp_def)
+            num_MPC_parameters_values.append(mp_val)
+            num_MPC_parameters_children.extend([mp_def, mp_val, mp_numeric])
+
+            widget_dict.update({f"MPC_para_{i}_def": mp_def,
+                                f"MPC_para_{i}_expr": mp_val,
+                                f"MPC_para_{i}_numeric": mp_numeric})
+        grid = layout_generator(num_MPC_parameters_header, num_MPC_parameters_children, num_cols=3, col_width=400)
+    return grid, widget_dict
+
+
+def estimator_parameter_grid_generator(num_estimator_parameters):
+    widget_dict = {}
+    grid = None
+    if num_estimator_parameters > 0:
+        num_estimator_parameters_children = []
+        num_estimator_parameters_names = []
+        num_estimator_parameters_values = []
+        num_estimator_parameters_header = Button(description='Estimator Parameters',
+                        layout=Layout(width='auto', grid_area='header'),
+                        style=ButtonStyle(button_color='lightblue'))
+        
+        est_type = Dropdown(options=['StateFeedback', 'EKF', 'MHE'],
+                    value='StateFeedback',
+                    description='Estimator:',
+                    disabled=False,
+                )
+        widget_dict["est_type"] = est_type
+        label_description = Label(value="Set the type of estimator.")
+        label_choice = Label(value="Choose from ['StateFeedback', 'EKF', 'MHE']")
+        num_estimator_parameters_children.extend([label_description, label_choice, est_type])
+        for i in range(num_estimator_parameters):
+            ep_def = Text(value=f"Estimator_Parameter_{i}",
+                        placeholder=f"Estimator_Parameter_{i}",
+                        description=f"{i+1}-th Parameter of estimator:",
+                        style={'description_width': 'initial'},
+                        disabled=False)
+            
+            ep_val = Text(value="val",
+                        placeholder="val",
+                        description="Value:",
+                        disabled=False)
+
+            ep_numeric =  Checkbox(value=False,
+                            description='Numeric',
+                            disabled=False,
+                            indent=False)
+            
+            num_estimator_parameters_names.append(ep_def)
+            num_estimator_parameters_values.append(ep_val)
+            num_estimator_parameters_children.extend([ep_def, ep_val, ep_numeric])
+
+            widget_dict.update({f"estimator_para_{i}_def": ep_def,
+                                f"estimator_para_{i}_expr": ep_val,
+                                f"estimator_para_{i}_numeric": ep_numeric})
+        grid = layout_generator(num_estimator_parameters_header, num_estimator_parameters_children, num_cols=3, col_width=400)
     return grid, widget_dict
