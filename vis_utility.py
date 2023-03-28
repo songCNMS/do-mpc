@@ -147,33 +147,33 @@ def state_variables_grid_generator(num_state_variables, default_wd=None):
                                 style={'description_width': 'initial'},
                                 disabled=False)
 
-            sv_init_val = FloatText(value=(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", 0.0)),
+            sv_init_val = Text(value=str(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", 0.0)),
                                     description=f"Init Value:",
                                     disabled=False)
             
-            sv_lower_bound = FloatText(value=(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", 0.0)),
+            sv_lower_bound = Text(value=str(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", 0.0)),
                                     description=f"Lower Bound:",
                                     disabled=False)
             
-            sv_upper_bound = FloatText(value=0.0,
+            sv_upper_bound = Text(value=str(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_upper", 0.0)),
                                     description=f"Upper Bound:",
                                     disabled=False)
             
-            sv_rhs = Text(value="x1+x2",
+            sv_rhs = Text(value=("x1+x2" if default_wd is None else default_wd['model']['state_variables'][var_name].get("rhs", "")),
                                 placeholder="x1+x2",
                                 description="RHS:",
                                 disabled=False)
 
-            sv_shape = Text(value="(1,)",
+            sv_shape = Text(value=("(1,)" if default_wd is None else default_wd['model']['state_variables'][var_name].get("shape", "(1,)")),
                             placeholder="(1,)",
                             description="Shape:",
                             disabled=False)
                         
-            sv_scaling = FloatText(value=1.0,
+            sv_scaling = FloatText(value=(1.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("scaling", 1.0)),
                                 description=f"Scaling:",
                                 disabled=False)
             
-            sv_soft = Checkbox(value=False,
+            sv_soft = Checkbox(value=(False if default_wd is None else default_wd['model']['state_variables'][var_name].get("soft", False)),
                             description='Soft',
                             disabled=False,
                             indent=False)
