@@ -1,4 +1,6 @@
 from ipywidgets import *
+import yaml
+
 
 
 def layout_generator(header, children, num_cols=2, col_width=200, row_height=40):
@@ -21,22 +23,21 @@ def layout_generator(header, children, num_cols=2, col_width=200, row_height=40)
 
 
 
-def var_num_grid_generator():
+def var_num_grid_generator(default_wd=None):
     header  = Button(description='Model Specification',
                  layout=Layout(width='auto', grid_area='header'),
                  style=ButtonStyle(button_color='lightblue'))
-    model_name = Text(value='Model Name',
+    model_name = Text(value=('Model Name' if default_wd is None else default_wd["model"]["model_name"]),
                     placeholder='Type something',
                     description='Model Name:',
                     disabled=False)
 
     model_type = Dropdown(options=['continuous', 'discrete'],
-                        value='continuous',
+                        value=('continuous' if default_wd is None else default_wd["model"]["model_type"]),
                         description='Model Type:',
                         disabled=False)
 
-
-    num_constants = BoundedIntText(value=2,
+    num_constants = BoundedIntText(value=(2 if default_wd is None else len(default_wd['model'].get("constants", {}).keys())),
                                 min=0,
                                 step=1,
                                 description='Num. Constants:',
@@ -44,7 +45,7 @@ def var_num_grid_generator():
                                 disabled=False)
 
 
-    num_state_variables = BoundedIntText(value=2,
+    num_state_variables = BoundedIntText(value=(2 if default_wd is None else len(default_wd['model'].get("state_variables", {}).keys())),
                                         min=0,
                                         step=1,
                                         description='Num. State Variables:',
@@ -53,7 +54,7 @@ def var_num_grid_generator():
 
 
 
-    num_control_variables = BoundedIntText(value=2,
+    num_control_variables = BoundedIntText(value=(2 if default_wd is None else len(default_wd['model'].get("control_variables", {}).keys())),
                                         min=0,
                                         step=1,
                                         description='Num. Control Variables:',
@@ -61,7 +62,7 @@ def var_num_grid_generator():
                                         disabled=False)
 
 
-    num_parameters = BoundedIntText(value=2,
+    num_parameters = BoundedIntText(value=(2 if default_wd is None else len(default_wd['model'].get("user_defined_parameters", []))),
                                     min=0,
                                     step=1,
                                     description='Num. User Defined Parameters',
@@ -69,7 +70,7 @@ def var_num_grid_generator():
                                     disabled=False)
 
 
-    num_aux_variables = BoundedIntText(value=2,
+    num_aux_variables = BoundedIntText(value=(2 if default_wd is None else len(default_wd['model'].get("aux_variables", {}).keys())),
                                     min=0,
                                     step=1,
                                     description='Num. Auxiliary Variables:',
@@ -88,7 +89,7 @@ def var_num_grid_generator():
     return grid, widget_dict
 
 
-def constants_grid_generator(num_constants):
+def constants_grid_generator(num_constants, default_wd=None):
     widget_dict = {}
     grid = None
     if num_constants > 0:
@@ -98,14 +99,15 @@ def constants_grid_generator(num_constants):
         constants_header = Button(description='Constants Definition',
                         layout=Layout(width='auto', grid_area='header'),
                         style=ButtonStyle(button_color='lightblue'))
+        constant_names = ([f"X_{i}" for i in range(num_constants)] if default_wd is None else list(default_wd["model"].get("constants", {}).keys()))
         for i in range(num_constants):
-            constant_def = Text(value=f"X_{i}",
-                                placeholder=f"X_{i}",
+            constant_def = Text(value=constant_names[i],
+                                placeholder=constant_names[i],
                                 description=f"{i+1}-th Constant Name:",
                                 style={'description_width': 'initial'},
                                 disabled=False)
 
-            constant_val = FloatText(value=0.0,
+            constant_val = FloatText(value=(0.0 if default_wd is None else default_wd['model']['constants'][constant_names[i]]),
                                     description=f"Value:",
                                     disabled=False)
             constant_children.extend([constant_def, constant_val])
@@ -119,7 +121,7 @@ def constants_grid_generator(num_constants):
     return grid, widget_dict
     
     
-def state_variables_grid_generator(num_state_variables):
+def state_variables_grid_generator(num_state_variables, default_wd=None):
     widget_dict = {}
     grid = None
     if num_state_variables > 0:
@@ -136,18 +138,20 @@ def state_variables_grid_generator(num_state_variables):
         state_variables_header = Button(description='State Variables Definition',
                         layout=Layout(width='auto', grid_area='header'),
                         style=ButtonStyle(button_color='lightblue'))
+        state_variables = ([f"X_{i}" for i in range(num_state_variables)] if default_wd is None else list(default_wd["model"].get("state_variables", {}).keys()))
         for i in range(num_state_variables):
-            sv_def = Text(value=f"X_{i}",
-                                placeholder=f"X_{i}",
+            var_name = state_variables[i]
+            sv_def = Text(value=var_name,
+                                placeholder=var_name,
                                 description=f"{i+1}-th State Variable Name:",
                                 style={'description_width': 'initial'},
                                 disabled=False)
 
-            sv_init_val = FloatText(value=0.0,
+            sv_init_val = FloatText(value=(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", 0.0)),
                                     description=f"Init Value:",
                                     disabled=False)
             
-            sv_lower_bound = FloatText(value=0.0,
+            sv_lower_bound = FloatText(value=(0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", 0.0)),
                                     description=f"Lower Bound:",
                                     disabled=False)
             
@@ -198,7 +202,7 @@ def state_variables_grid_generator(num_state_variables):
     return grid, widget_dict
     
     
-def parameters_grid_generator(num_parameters):
+def parameters_grid_generator(num_parameters, default_wd=None):
     widget_dict = {}
     grid = None
     if num_parameters > 0:
@@ -229,7 +233,7 @@ def parameters_grid_generator(num_parameters):
         return grid, widget_dict
     
     
-def control_variables_grid_generator(num_control_variables):
+def control_variables_grid_generator(num_control_variables, default_wd=None):
     widget_dict = {}
     grid = None
     if num_control_variables > 0:
@@ -260,7 +264,7 @@ def control_variables_grid_generator(num_control_variables):
     return grid, widget_dict
 
 
-def aux_variable_grid_generator(num_aux_variables):
+def aux_variable_grid_generator(num_aux_variables, default_wd=None):
     widget_dict = {}
     grid = None
     if num_aux_variables > 0:
@@ -292,7 +296,7 @@ def aux_variable_grid_generator(num_aux_variables):
     return grid, widget_dict
 
 
-def simulator_parameter_grid_generator(num_simulator_parameters):
+def simulator_parameter_grid_generator(num_simulator_parameters, default_wd=None):
     widget_dict = {}
     grid = None
     if num_simulator_parameters > 0:
@@ -330,7 +334,7 @@ def simulator_parameter_grid_generator(num_simulator_parameters):
     return grid, widget_dict
 
 
-def state_rewards_grid_generator(sv_names):
+def state_rewards_grid_generator(sv_names, default_wd=None):
     widget_dict = {}
     grid = None
     if len(sv_names) > 0:
@@ -362,6 +366,7 @@ def state_rewards_grid_generator(sv_names):
 
             tr_coef = FloatText(value=0.0,
                                 description=f"Terminal Coef:",
+                                style={'description_width': 'initial'},
                                 disabled=False)
             
             step_rewards_expr.append(sr_expr)
@@ -381,7 +386,7 @@ def state_rewards_grid_generator(sv_names):
 
 
 
-def input_rewards_grid_generator(in_names):
+def input_rewards_grid_generator(in_names, default_wd=None):
     widget_dict = {}
     grid = None
     if len(in_names) > 0:
@@ -391,23 +396,22 @@ def input_rewards_grid_generator(in_names):
         input_rewards_coef = []
         input_rewards_children = []
         for i in range(len(in_names)):
-            in_def = Label(value=in_names[i], disabled=False)
-
+            # in_def = Label(value=in_names[i], disabled=False)
             in_coef = FloatText(value=0.0,
-                                description=f"Coef:",
+                                description=f"Coef of {in_names[i]}:",
+                                style={'description_width': 'initial'},
                                 disabled=False)
             input_rewards_coef.append(in_coef)
-            input_rewards_children.extend([in_def, in_coef])
-            widget_dict.update({f"in_{i}_def": in_def,
-                                f"in_{i}_coef": in_coef})
+            input_rewards_children.extend([in_coef])
+            widget_dict.update({f"in_{i}_coef": in_coef})
 
-        grid = layout_generator(input_reward_header, input_rewards_children, num_cols=2, col_width=400)
+        grid = layout_generator(input_reward_header, input_rewards_children, num_cols=1, col_width=400)
     
     return grid, widget_dict
 
 
 
-def MPC_parameter_grid_generator(num_MPC_parameters):
+def MPC_parameter_grid_generator(num_MPC_parameters, default_wd=None):
     widget_dict = {}
     grid = None
     if num_MPC_parameters > 0:
@@ -445,7 +449,7 @@ def MPC_parameter_grid_generator(num_MPC_parameters):
     return grid, widget_dict
 
 
-def estimator_parameter_grid_generator(num_estimator_parameters):
+def estimator_parameter_grid_generator(num_estimator_parameters, default_wd=None):
     widget_dict = {}
     grid = None
     if num_estimator_parameters > 0:
@@ -491,3 +495,98 @@ def estimator_parameter_grid_generator(num_estimator_parameters):
                                 f"estimator_para_{i}_numeric": ep_numeric})
         grid = layout_generator(num_estimator_parameters_header, num_estimator_parameters_children, num_cols=3, col_width=400)
     return grid, widget_dict
+
+
+def model2yaml(wd, model_config):
+    for i in range(wd["num_constants"].value):
+        model_config["model"]["constants"][wd[f"constant_{i}_def"].value] = wd[f"constant_{i}_val"].value 
+    
+    for i in range(wd["num_state_variables"].value):
+        model_config["model"]["state_variables"][wd[f"sv_{i}_def"].value] = {
+            "init_val": wd[f"sv_{i}_init_val"].value,
+            "init_val_lower": wd[f"sv_{i}_lower_bound"].value,
+            "init_val_upper": wd[f"sv_{i}_upper_bound"].value,
+            "rhs": wd[f"sv_{i}_rhs"].value,
+            "shape": wd[f"sv_{i}_shape"].value,
+            "scaling": wd[f"sv_{i}_scaling"].value 
+        }
+    
+    for i in range(wd["num_control_variables"].value):
+        model_config["model"]["control_variables"][wd[f"cv_{i}_def"].value] = {
+            "shape": wd[f"cv_{i}_shape"].value
+        }
+        
+    model_config["model"]["user_defined_parameters"] = [wd[f"para_{i}_def"].value for i in range(wd["num_parameters"].value)]
+    
+    for i in range(wd["num_aux_variables"].value):
+        model_config["model"]["aux_variables"][wd[f"av_{i}_def"].value] = {
+            "expr": wd[f"av_{i}_expr"].value
+        }
+    return model_config
+
+
+def simulator2yaml(wd, model_config):
+    model_config["simulator"] = {"parameters": {}}
+    model_config["simulator"]["parameters"] = {
+            wd[f"sim_para_{i}_def"].value: (float(wd[f"sim_para_{i}_expr"].value) if wd[f"sim_para_{i}_numeric"].value else wd[f"sim_para_{i}_expr"].value)
+            for i in range(wd["num_simulator_parameters"])
+        }
+    return model_config
+
+
+def reward2yaml(wd, model_config):
+    model_config["reward"] = {"step_reward": {},
+                              "terminal_reward": {}, 
+                              "input_reward": {wd[f"cv_{i}_def"].value: wd[f"in_{i}_coef"].value for i in range(wd["num_control_variables"].value)}
+        }
+    for i in range(wd["num_state_variables"].value):
+        model_config["reward"]["step_reward"][wd[f"sv_{i}_def"].value] = {
+            "expr": wd[f"sr_{i}_expr"].value,
+            "coef": wd[f"sr_{i}_coef"].value
+        }
+        model_config["reward"]["terminal_reward"][wd[f"sv_{i}_def"].value] = {
+            "expr": wd[f"tr_{i}_expr"].value,
+            "coef": wd[f"tr_{i}_coef"].value
+        }
+    return model_config
+
+
+def mpc2yaml(wd, model_config):
+    model_config["mpc"] = {"setup": {}}
+    model_config["mpc"]["setup"] = {
+            wd[f"MPC_para_{i}_def"].value: (float(wd[f"MPC_para_{i}_expr"].value) if wd[f"MPC_para_{i}_numeric"].value else wd[f"MPC_para_{i}_expr"].value)
+            for i in range(wd["num_MPC_parameters"])
+        }
+    return model_config
+
+
+def estimator2yaml(wd, model_config):
+    model_config["estimator"] = {"type": wd["est_type"].value,
+                                 "parameters": {wd[f"estimator_para_{i}_def"].value: (float(wd[f"estimator_para_{i}_expr"].value) if wd[f"estimator_para_{i}_numeric"].value else wd[f"estimator_para_{i}_expr"].value)
+            for i in range(wd["num_estimator_parameters"])}
+        }
+    return model_config
+    
+
+
+def save2yaml(wd, yaml_file):
+    model_config = {}
+    model_config["model"] = {
+        "model_name": wd["model_name"].value,
+        "model_type": wd["model_type"].value,
+        "constants": {},
+        "state_variables": {},
+        "control_variables": {},
+        "user_defined_parameters": [],
+        "aux_variables": {}
+    }
+    
+    model_config = model2yaml(wd, model_config)
+    model_config = simulator2yaml(wd, model_config)
+    model_config = reward2yaml(wd, model_config)
+    model_config = mpc2yaml(wd, model_config)
+    model_config = estimator2yaml(wd, model_config)
+    
+    with open(yaml_file, 'w', encoding='utf-8') as f:
+        yaml.dump(model_config, f)
+    
