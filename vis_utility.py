@@ -1,5 +1,6 @@
 from ipywidgets import *
 import yaml
+import distutils
 
 
 
@@ -147,18 +148,18 @@ def state_variables_grid_generator(num_state_variables, default_wd=None):
                         description=f"{i+1}-th State Variable Name:",
                         style={'description_width': 'initial'},
                         disabled=False)
-            if shape == (1,0): val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", 0.0))
+            if shape == "(1,)": val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", 0.0))
             else: val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val", [0.0])[0])
             sv_init_val = FloatText(value=val,
                                     description=f"Init Value:",
                                     disabled=False)
             
-            if shape == (1,0): val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", 0.0))
+            if shape == "(1,)": val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", 0.0))
             else: val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_lower", [0.0])[0])
             sv_lower_bound = FloatText(value=val,
                                     description=f"Lower Bound:",
                                     disabled=False)
-            if shape == (1,0): val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_upper", 0.0))
+            if shape == "(1,)": val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_upper", 0.0))
             else: val = (0.0 if default_wd is None else default_wd['model']['state_variables'][var_name].get("init_val_upper", [0.0])[0])
             sv_upper_bound = FloatText(value=val,
                                     description=f"Upper Bound:",
@@ -224,7 +225,7 @@ def parameters_grid_generator(num_parameters, default_wd=None):
                         description=f"{i+1}-th Parameter:",
                         style={'description_width': 'initial'},
                         disabled=False)
-            para_val = ("1,2,3" if default_wd is None else default_wd['mpc']['uncertainities'][parameters_names[i]])
+            para_val = str("1,2,3" if default_wd is None else default_wd['mpc']['uncertainities'][parameters_names[i]])
             para_uncertainties = Text(value=para_val,
                                     placeholder=para_val,
                                     description="Values:",
@@ -251,14 +252,15 @@ def control_variables_grid_generator(num_control_variables, default_wd=None):
                         style=ButtonStyle(button_color='lightblue'))
         control_variables_names = ([f"In_{i}" for i in range(num_control_variables)] if default_wd is None else list(default_wd["model"].get("control_variables", {}).keys()))
         for i in range(num_control_variables):
-            cv_def = Text(value=control_variables_names[i],
-                        placeholder=control_variables_names[i],
-                        description=f"{i+1}-th Control Variable:",
-                        style={'description_width': 'initial'},
-                        disabled=False)
-            cv_val = ("(1,)" if default_wd is None else default_wd['model']['control_variables'][control_variables_names[i]].get("shape", "(1,)"))
-            cv_shape = Text(value=cv_val,
-                            placeholder=cv_val,
+            var_name = control_variables_names[i]
+            cv_def = Text(value=var_name,
+                          placeholder=var_name,
+                          description=f"{i+1}-th Control Variable:",
+                          style={'description_width': 'initial'},
+                          disabled=False)
+            shape = ("(1,)" if default_wd is None else default_wd['model']['control_variables'][control_variables_names[i]].get("shape", "(1,)"))
+            cv_shape = Text(value=shape,
+                            placeholder=shape,
                             description="Shape:",
                             disabled=False)
             control_variables_children.extend([cv_def, cv_shape])
@@ -326,11 +328,11 @@ def simulator_parameter_grid_generator(num_simulator_parameters, default_wd=None
                         placeholder=val,
                         description="Value:",
                         disabled=False)
-            val = (False if default_wd is None else type(default_wd['simulator']['parameters'][parameter_names[i]]) is not str)
-            sp_numeric =  Checkbox(value=val,
-                            description='Numeric',
-                            disabled=False,
-                            indent=False)
+            val = str(type(default_wd['simulator']))
+            
+            sp_numeric =  Dropdown(options=["int", "float", "str", "bool"],
+                                   value=("str" if default_wd is None else type(default_wd["simulator"]['parameters'][parameter_names[i]]).__name__),
+                                   description='Type:')
             
             num_simulator_parameters_names.append(sp_def)
             num_simulator_parameters_values.append(sp_val)
@@ -359,21 +361,21 @@ def state_rewards_grid_generator(sv_names, default_wd=None):
             sr_def = Label(value=sv_names[i],
                            disabled=False)
 
-            sr_expr = Text(value=(f"({sv_names[i]}-0.6)" if default_wd is None else default_wd["reward"]["step_reward"][sv_names[i]].get("expr", sv_names[i])),
+            sr_expr = Text(value=(f"({sv_names[i]}-0.6)" if default_wd is None else default_wd["reward"]["step_reward"].get(sv_names[i], {}).get("expr", sv_names[i])),
                                 placeholder=f"({sv_names[i]}-0.6)",
                                 description="Step Expr:",
                                 disabled=False)
 
-            sr_coef = FloatText(value=(0.0 if default_wd is None else default_wd["reward"]["step_reward"][sv_names[i]].get("coef", 0.0)),
+            sr_coef = FloatText(value=(0.0 if default_wd is None else default_wd["reward"]["step_reward"].get(sv_names[i], {}).get("coef", 0.0)),
                                 description=f"Step Coef:",
                                 disabled=False)
             
-            tr_expr = Text(value=(f"({sv_names[i]}-0.6)" if default_wd is None else default_wd["reward"]["terminal_reward"][sv_names[i]].get("expr", sv_names[i])),
+            tr_expr = Text(value=(f"({sv_names[i]}-0.6)" if default_wd is None else default_wd["reward"]["terminal_reward"].get(sv_names[i], {}).get("expr", sv_names[i])),
                                 placeholder=f"({sv_names[i]}-0.6)",
                                 description="Terminal Expr:",
                                 disabled=False)
 
-            tr_coef = FloatText(value=(0.0 if default_wd is None else default_wd["reward"]["terminal_reward"][sv_names[i]].get("coef", 0.0)),
+            tr_coef = FloatText(value=(0.0 if default_wd is None else default_wd["reward"]["terminal_reward"].get(sv_names[i], {}).get("coef", 0.0)),
                                 description=f"Terminal Coef:",
                                 style={'description_width': 'initial'},
                                 disabled=False)
@@ -419,6 +421,46 @@ def input_rewards_grid_generator(in_names, default_wd=None):
     return grid, widget_dict
 
 
+def MPC_config_grid_generator(sv_names, in_names, default_wd=None):
+    widget_dict = {}
+    grid = None
+    if len(sv_names) + len(in_names) > 0:
+        num_MPC_config_children = []
+        num_MPC_config_header = Button(description='MPC Config',
+                        layout=Layout(width='auto', grid_area='header'),
+                        style=ButtonStyle(button_color='lightblue'))
+        for var_name in sv_names + in_names:
+            mc_def = Text(value=var_name,
+                         placeholder=var_name,
+                         description=f"{var_name}:",
+                         style={'description_width': 'initial'},
+                         disabled=False)
+            
+            val = (0.0 if default_wd is None else default_wd['mpc']['bounds'].get(var_name, {}).get("lower", 0.0))
+            mc_lower_bound = FloatText(value=val,
+                                       description=f"Lower Bound:",
+                                       disabled=False)
+            val = (0.0 if default_wd is None else default_wd['mpc']['bounds'][var_name].get("upper", 10000.0))
+            mc_upper_bound = FloatText(value=val,
+                                       description=f"Upper Bound:",
+                                       disabled=False)
+            
+            mc_scaling = FloatText(value=(1.0 if default_wd is None else default_wd['mpc']['bounds'].get(var_name, {}).get("scaling", 1.0)),
+                                description=f"Scaling:",
+                                disabled=False)
+            
+            mc_soft = Checkbox(value=(False if default_wd is None else default_wd['mpc']['bounds'].get(var_name, {}).get("soft", False)),
+                            description='Soft',
+                            disabled=False,
+                            indent=False)
+            num_MPC_config_children.extend([mc_def, mc_lower_bound, mc_upper_bound, mc_scaling, mc_soft])
+            widget_dict.update({f"mc_{var_name}_lower": mc_lower_bound,
+                                f"mc_{var_name}_upper": mc_upper_bound,
+                                f"mc_{var_name}_scaling": mc_scaling,
+                                f"mc_{var_name}_soft": mc_soft})
+        grid = layout_generator(num_MPC_config_header, num_MPC_config_children, num_cols=5, col_width=300)
+    return grid, widget_dict
+
 
 def MPC_parameter_grid_generator(num_MPC_parameters, default_wd=None):
     widget_dict = {}
@@ -437,17 +479,15 @@ def MPC_parameter_grid_generator(num_MPC_parameters, default_wd=None):
                         description=f"{i+1}-th Parameter of MPC:",
                         style={'description_width': 'initial'},
                         disabled=False)
-            val = ("val" if default_wd is None else default_wd['mpc']['setup'][parameter_names[i]])
+            val = str("val" if default_wd is None else default_wd['mpc']['setup'][parameter_names[i]])
             mp_val = Text(value=val,
                         placeholder=val,
                         description="Value:",
                         disabled=False)
-            val = (False if default_wd is None else type(default_wd['mpc']['setup'][parameter_names[i]]) is not str)
-            mp_numeric =  Checkbox(value=val,
-                            description='Numeric',
-                            disabled=False,
-                            indent=False)
             
+            mp_numeric =  Dropdown(options=["int", "float", "str", "bool"],
+                                   value=("str" if default_wd is None else type(default_wd['mpc']['setup'][parameter_names[i]]).__name__),
+                                   description='Type:')            
             num_MPC_parameters_names.append(mp_def)
             num_MPC_parameters_values.append(mp_val)
             num_MPC_parameters_children.extend([mp_def, mp_val, mp_numeric])
@@ -493,11 +533,9 @@ def estimator_parameter_grid_generator(num_estimator_parameters, default_wd=None
                         placeholder=val,
                         description="Value:",
                         disabled=False)
-            val = (False if default_wd is None else type(default_wd['estimator']['parameters'][parameter_names[i]]) is not str)
-            ep_numeric =  Checkbox(value=val,
-                            description='Numeric',
-                            disabled=False,
-                            indent=False)
+            ep_numeric =  Dropdown(options=["int", "float", "str", "bool"],
+                                   value=("str" if default_wd is None else type(default_wd['estimator']['parameters'][parameter_names[i]]).__name__),
+                                   description='Type:')  
             
             num_estimator_parameters_names.append(ep_def)
             num_estimator_parameters_values.append(ep_val)
@@ -541,10 +579,12 @@ def model2yaml(wd, model_config):
 
 def simulator2yaml(wd, model_config):
     model_config["simulator"] = {"parameters": {}}
-    model_config["simulator"]["parameters"] = {
-            wd[f"sim_para_{i}_def"].value: (float(wd[f"sim_para_{i}_expr"].value) if wd[f"sim_para_{i}_numeric"].value else wd[f"sim_para_{i}_expr"].value)
-            for i in range(wd["num_simulator_parameters"])
-        }
+    for i in range(wd["num_simulator_parameters"]):
+        type_eval = eval(wd[f"sim_para_{i}_numeric"].value)
+        if type_eval is bool:
+            model_config["simulator"]["parameters"][wd[f"sim_para_{i}_def"].value] = type_eval(distutils.util.strtobool(wd[f"sim_para_{i}_expr"].value))
+        else:
+            model_config["simulator"]["parameters"][wd[f"sim_para_{i}_def"].value] = type_eval(wd[f"sim_para_{i}_expr"].value)
     return model_config
 
 
@@ -565,21 +605,28 @@ def reward2yaml(wd, model_config):
     return model_config
 
 
+
 def mpc2yaml(wd, model_config):
     model_config["mpc"] = {"setup": {}}
-    model_config["mpc"]["setup"] = {
-            wd[f"MPC_para_{i}_def"].value: (float(wd[f"MPC_para_{i}_expr"].value) if wd[f"MPC_para_{i}_numeric"].value else wd[f"MPC_para_{i}_expr"].value)
-            for i in range(wd["num_MPC_parameters"])
-        }
+    for i in range(wd["num_MPC_parameters"]):
+        type_eval = eval(wd[f"MPC_para_{i}_numeric"].value)
+        if type_eval is bool:
+            model_config["mpc"]["setup"][wd[f"MPC_para_{i}_def"].value] = type_eval(distutils.util.strtobool(wd[f"MPC_para_{i}_expr"].value))
+        else: model_config["mpc"]["setup"][wd[f"MPC_para_{i}_def"].value] = type_eval(wd[f"MPC_para_{i}_expr"].value)
     # TODO: more config for MPC
+    
+    model_config["mpc"]["scaling"]
+    
     return model_config
 
 
 def estimator2yaml(wd, model_config):
-    model_config["estimator"] = {"type": wd["est_type"].value,
-                                 "parameters": {wd[f"estimator_para_{i}_def"].value: (float(wd[f"estimator_para_{i}_expr"].value) if wd[f"estimator_para_{i}_numeric"].value else wd[f"estimator_para_{i}_expr"].value)
-            for i in range(wd["num_estimator_parameters"])}
-        }
+    model_config["estimator"]["type"] = wd["est_type"].value
+    for i in range(wd["num_estimator_parameters"]):
+        type_eval = eval(wd[f"estimator_para_{i}_numeric"].value)
+        if type_eval is bool:
+            model_config["estimator"]["parameters"][wd[f"estimator_para_{i}_def"].value] = type_eval(distutils.util.strtobool(wd[f"estimator_para_{i}_expr"].value))
+        else: model_config["estimator"]["parameters"][wd[f"estimator_para_{i}_def"].value] = type_eval(wd[f"estimator_para_{i}_expr"].value)
     return model_config
     
 
