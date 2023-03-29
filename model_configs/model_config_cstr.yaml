@@ -137,7 +137,7 @@ mpc:
     Q_dot:
       lower: -8500.0
       upper: 0.0
-  uncertainities:
+  uncertainties:
     alpha: [1., 1.05, 0.95]
     beta: [1., 1.1, 0.9]
     

@@ -82,7 +82,7 @@ def template_simulator(model):
     simulator_str += f"    simulator.set_param(**params_simulator) \n"
     simulator_str += f"    p_num = simulator.get_p_template() \n"
     
-    p_values = config["mpc"]["uncertainities"]
+    p_values = config["mpc"]["uncertainties"]
     for key, vals in p_values.items():
         simulator_str += f"    {key}_values = {vals} \n"
         simulator_str += f"    p_num['{key}'] = {vals[0]} \n"
@@ -118,7 +118,7 @@ def template_mpc(model):
 """
     mpc_str += f"    setup_mpc = {str(config['mpc']['setup'])} \n"
     mpc_str += f"    mpc.set_param(**setup_mpc) \n"
-    p_values = config["mpc"]["uncertainities"]
+    p_values = config["mpc"]["uncertainties"]
     for key, vals in p_values.items():
         mpc_str += f"    {key}_values = np.array({vals}) \n"
     

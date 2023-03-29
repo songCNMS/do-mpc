@@ -92,7 +92,7 @@ mpc: # config for MPC controller, required if MPC policy is needed
     in2:
       lower: 50.0
       upper: 140.0
-  uncertainities: # define a list for each user-defined-parameter from which a value is randomly sampled that will be assinged to the parameter
+  uncertainties: # define a list for each user-defined-parameter from which a value is randomly sampled that will be assinged to the parameter
     alpha: [1., 1.05, 0.95]
     beta: [1., 1.1, 0.9]
     

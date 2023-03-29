@@ -95,7 +95,7 @@ mpc:
     inp:
       lower: 0.0
       upper: 0.2
-  uncertainities:
+  uncertainties:
     Y_x: [0.5, 0.4, 0.3]
     S_in: [200.0, 220.0, 180.0]
     
