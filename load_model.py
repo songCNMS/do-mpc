@@ -126,13 +126,14 @@ def template_mpc(model):
     if "step_reward" in config["reward"]:
         for key, vals in config["reward"]["step_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
-            mterm = f"{-vals['coef']}*{expr}"
-            
+            if vals["coef"] > 0: mterm += f"-{vals['coef']}*{expr}"
+            elif vals["coef"] < 0: mterm += f"+{-vals['coef']}*{expr}"
     if "terminal_reward" in config["reward"]:
         lterm = ""
         for key, vals in config["reward"]["terminal_reward"].items():
             expr = vals['expr'].replace(key, f"model.x['{key}']")
-            lterm += f"{-vals['coef']}*{expr}"
+            if vals["coef"] > 0: lterm += f"-{vals['coef']}*{expr}"
+            elif vals["coef"] < 0: lterm += f"+{-vals['coef']}*{expr}"
     objective_str = ""
     if mterm != "": 
         mpc_str += f"    mterm={mterm} \n"
@@ -164,11 +165,11 @@ def template_mpc(model):
                         type_str = ("model.x" if key in config["model"]["state_variables"] else "model.u")
                         mpc_str += f"    mpc.set_nl_cons('{key}', {type_str}['{key}'], ub={vals[bound_str]}, soft_constraint=True, penalty_term_cons={coef}) \n"
     
-    if "uncertainities" in config["mpc"]:
-        for key, val in config["mpc"]["uncertainities"].items():
+    if "uncertainties" in config["mpc"]:
+        for key, val in config["mpc"]["uncertainties"].items():
             mpc_str += f"    {key}_values = np.array({val}) \n"
-        uncertainities_str = ",".join([f"{key}={key}_values" for key in config["mpc"]["uncertainities"].keys()])
-        mpc_str += f"    mpc.set_uncertainty_values({uncertainities_str}) \n"
+        uncertainties_str = ",".join([f"{key}={key}_values" for key in config["mpc"]["uncertainties"].keys()])
+        mpc_str += f"    mpc.set_uncertainty_values({uncertainties_str}) \n"
            
     mpc_str += f"    mpc.setup()\n"
     mpc_str += f"    return mpc"

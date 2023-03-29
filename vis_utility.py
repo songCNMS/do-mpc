@@ -548,7 +548,7 @@ def simulator_parameter_grid_generator(num_simulator_parameters, default_wd=None
                 style={"description_width": "initial"},
                 disabled=False,
             )
-            val = str(
+            val = (
                 "val"
                 if default_wd is None
                 else default_wd["simulator"]["parameters"].get(
@@ -556,7 +556,7 @@ def simulator_parameter_grid_generator(num_simulator_parameters, default_wd=None
                 )
             )
             sp_val = Text(
-                value=val, placeholder=val, description="Value:", disabled=False
+                value=str(val), placeholder=str(val), description="Value:", disabled=False
             )
             sp_numeric = Dropdown(
                 options=["int", "float", "str", "bool"],
@@ -811,13 +811,13 @@ def MPC_parameter_grid_generator(num_MPC_parameters, default_wd=None):
                 style={"description_width": "initial"},
                 disabled=False,
             )
-            val = str(
+            val = (
                 "val"
                 if default_wd is None
                 else default_wd["mpc"]["setup"].get(para_name, "val")
             )
             mp_val = Text(
-                value=val, placeholder=val, description="Value:", disabled=False
+                value=str(val), placeholder=str(val), description="Value:", disabled=False
             )
 
             mp_numeric = Dropdown(
@@ -897,7 +897,7 @@ def estimator_parameter_grid_generator(num_estimator_parameters, default_wd=None
         )
 
         val = parameters_dd.get(para_name, "val")
-        ep_val = Text(value=val, placeholder=val, description="Value:", disabled=False)
+        ep_val = Text(value=str(val), placeholder=str(val), description="Value:", disabled=False)
         ep_numeric = Dropdown(
             options=["int", "float", "str", "bool"],
             value=type(val).__name__,
