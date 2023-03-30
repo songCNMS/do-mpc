@@ -63,6 +63,7 @@ parser.add_argument("--device", type=int, help='device id', default="0")
 parser.add_argument("--iter", type=int, help='iter. num.', default=0)
 parser.add_argument("--env", type=str, help='env. name', default="CSTR")
 
+
 # TODO: load previous algorithm before training
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -119,12 +120,6 @@ if __name__ == "__main__":
         for i in range(num_of_seeds):
             seeds.append(random.randint(0, 2**32-1))
 
-    # if not online_training:
-    #     with open(training_dataset_loc, 'rb') as handle:
-    #         training_dataset_pkl = pickle.load(handle)
-    #     with open(eval_dataset_loc, 'rb') as handle:
-    #         eval_dataset_pkl = pickle.load(handle)
-
     if online_training:
         algo_names = ['CQL', 'PLAS', 'PLASWithPerturbation', 'BEAR', 'SAC', 'BCQ', 'CRR', 'AWAC', 'DDPG', 'TD3', 'COMBO', 'MOPO', 'BC']
         default_loc += '_ONLINE'
@@ -165,11 +160,11 @@ if __name__ == "__main__":
                 # action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(maximum=env.max_actions, minimum=env.min_actions)
                 scaler = None
                 action_scaler = None
-                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(minimum=-4.0, maximum=0.0)
+                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset)
             else:
                 scaler = d3rlpy.preprocessing.MinMaxScaler(dataset)
                 action_scaler = d3rlpy.preprocessing.MinMaxActionScaler(dataset)
-                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(minimum=-4.0, maximum=0.0)
+                reward_scaler = d3rlpy.preprocessing.MinMaxRewardScaler(dataset)
             encoder_factory = d3rlpy.models.encoders.VectorEncoderFactory(activation="relu", dropout_rate=0.0, hidden_units=[128,128], use_dense=True)
             optim_factory=d3rlpy.models.optimizers.AdamFactory(optim_cls='Adam', betas=(0.9, 0.999), eps=1e-08, weight_decay=0.1, amsgrad=False)
 
@@ -230,15 +225,10 @@ if __name__ == "__main__":
                                               critic_optim_factory=optim_factory)
             elif algo_name == 'COMBO':
                 dynamics = 1
-            #     dynamics = d3rlpy.dynamics.ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=use_gpu)
-            #     curr_algo = d3rlpy.algos.COMBO(use_gpu=use_gpu)
             elif algo_name == 'MOPO':
                 dynamics = 1
-            #     dynamics = d3rlpy.dynamics.ProbabilisticEnsembleDynamics(learning_rate=1e-4, use_gpu=use_gpu)
-            #     curr_algo = d3rlpy.algos.MOPO(use_gpu=use_gpu)
             else:
                 raise Exception("algo_name is invalid!", algo_name)
-            # print(dataset_name, env.action_space.shape, env.observation_space.shape, len(dataset.episodes), np.ceil(len(dataset.episodes)*0.01))
             
             logdir = f"{default_loc}/{args.exp}_{seed}/"
             actual_dir = logdir+'/'+algo_name

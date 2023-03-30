@@ -552,7 +552,7 @@ def simulator_parameter_grid_generator(num_simulator_parameters, default_wd=None
                 "val"
                 if default_wd is None
                 else default_wd["simulator"]["parameters"].get(
-                    parameter_names[i], "val"
+                    para_name, "val"
                 )
             )
             sp_val = Text(

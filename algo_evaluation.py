@@ -62,16 +62,17 @@ def report_rewards(env, rewards_list, algo_names=None, save_dir=None):
     return result_dict
 
 # ---- standard ----
-def evalute_algorithms(env, algorithms, num_episodes=1, to_plt=True,
-                        plot_dir='./plt_results'):
+def evaluate_algorithms(env, algorithms, num_episodes=1, to_plt=True,
+                        plot_dir='./plt_results', seed=None):
     if plot_dir is not None:
         os.makedirs(plot_dir, exist_ok=True)
     
     observations_list = [[] for _ in range(len(algorithms))] 
     actions_list = [[] for _ in range(len(algorithms))]
     rewards_list = [[] for _ in range(len(algorithms))]
+    if seed is None: seed = 7
     for n_epi in tqdm(range(num_episodes)):
-        seed = n_epi + 7
+        seed += 1
         d3rlpy.seed(seed)
         np.random.seed(seed)
         random.seed(seed)
@@ -295,7 +296,7 @@ if __name__ == "__main__":
                 curr_algo = OfflineRLModel(algo_name, best_model_loc)
                 algorithms = [(curr_algo, algo_name)]
             save_dir = os.path.join(plt_dir, env_name, algo_name)
-            observations_list, actions_list, rewards_list = evalute_algorithms(env, algorithms, num_episodes=num_episodes, to_plt=args.plt, plot_dir=save_dir)
+            observations_list, actions_list, rewards_list = evaluate_algorithms(env, algorithms, num_episodes=num_episodes, to_plt=args.plt, plot_dir=save_dir)
             results_dict = report_rewards(env, rewards_list, algo_names=[_a_name for _, _a_name in algorithms], save_dir=save_dir)
             results_csv.append([algo_name, results_dict[f'{algo_name}_on_episodes_reward_mean'], results_dict[f'{algo_name}_on_episodes_reward_std'], results_dict[f'{algo_name}_all_reward_mean'], results_dict[f'{algo_name}_all_reward_std']])
             np.save(os.path.join(save_dir, f'observations.npy'), observations_list)

@@ -16,3 +16,4 @@ plt_results
 .github
 .vscode
 amlt
+*.ipynb

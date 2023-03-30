@@ -34,42 +34,42 @@ data:
 
 jobs:
 
-- name: IPR-data-0-1000
+- name: cstr_test-data-0-1000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 0 --end_episodes 1000 --env IPR --seed 3 --algo MPC
+  - python data_collection.py --amlt --start_episodes 0 --end_episodes 1000 --env cstr_test --seed 3 --algo MPC
 
-- name: IPR-data-1000-2000
+- name: cstr_test-data-1000-2000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 1000 --end_episodes 2000 --env IPR --seed 5 --algo MPC
+  - python data_collection.py --amlt --start_episodes 1000 --end_episodes 2000 --env cstr_test --seed 5 --algo MPC
 
-- name: IPR-data-2000-3000
+- name: cstr_test-data-2000-3000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 2000 --end_episodes 3000 --env IPR --seed 7 --algo MPC
+  - python data_collection.py --amlt --start_episodes 2000 --end_episodes 3000 --env cstr_test --seed 7 --algo MPC
 
-- name: IPR-data-3000-4000
+- name: cstr_test-data-3000-4000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 3000 --end_episodes 4000 --env IPR --seed 11 --algo MPC
+  - python data_collection.py --amlt --start_episodes 3000 --end_episodes 4000 --env cstr_test --seed 11 --algo MPC
 
-- name: IPR-data-4000-5000
+- name: cstr_test-data-4000-5000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 4000 --end_episodes 5000 --env IPR --seed 17 --algo MPC
+  - python data_collection.py --amlt --start_episodes 4000 --end_episodes 5000 --env cstr_test --seed 17 --algo MPC
 
-- name: IPR-data-5000-6000
+- name: cstr_test-data-5000-6000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 5000 --end_episodes 6000 --env IPR --seed 19 --algo MPC
+  - python data_collection.py --amlt --start_episodes 5000 --end_episodes 6000 --env cstr_test --seed 19 --algo MPC
 
-- name: IPR-data-6000-7000
+- name: cstr_test-data-6000-7000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 6000 --end_episodes 7000 --env IPR --seed 23 --algo MPC
+  - python data_collection.py --amlt --start_episodes 6000 --end_episodes 7000 --env cstr_test --seed 23 --algo MPC
 
-- name: IPR-data-7000-8000
+- name: cstr_test-data-7000-8000
   sku: C2
   command:
-  - python data_collection.py --amlt --start_episodes 7000 --end_episodes 8000 --env IPR --seed 29 --algo MPC
+  - python data_collection.py --amlt --start_episodes 7000 --end_episodes 8000 --env cstr_test --seed 29 --algo MPC
