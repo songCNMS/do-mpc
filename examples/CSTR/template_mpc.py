@@ -38,7 +38,7 @@ def template_mpc(model):
     mpc = do_mpc.controller.MPC(model)
 
     setup_mpc = {
-        'n_horizon': 50,
+        'n_horizon': 100,
         'n_robust': 1,
         'open_loop': 0,
         't_step': 0.005,
