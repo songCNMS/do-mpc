@@ -368,9 +368,12 @@ def step6(request):
     }
     return render(request, 'step6.html', init_context)
 
+import yaml
 
 def step7(request):
     yaml_config = save2yaml(request.session)
+    yaml_config = yaml.dump(yaml_config)
+    print(yaml_config)
     return render(request, 'step7.html', {"yaml_config": yaml_config})
 
 

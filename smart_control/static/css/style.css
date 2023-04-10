@@ -289,6 +289,9 @@ table.cart {
     color: #333;
     font-family: "Lato-Bold"; }
 
+.as-console-wrapper { top: 0; max-height: 100% !important; }
+
+
 .checkbox label {
   padding-left: 21px;
   cursor: pointer;
@@ -396,6 +399,9 @@ table.cart {
       padding-top: 30px;
       border-top: 1px solid #e6e6e6; } }
 
+  pre{
+    overflow-x:scroll;
+  }
   
     /* Box styles */
     .myBox {

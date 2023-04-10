@@ -1,5 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
+
 <html>
     <head>
 		<meta charset="utf-8">
@@ -15,20 +16,24 @@
 
 		<!-- STYLE CSS -->
 		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.js"></script>
 	</head>
 <body>
-    <div class="wrapper">
-        <form action="" id="wizard" method="post">
-            {% csrf_token %}
-            <section>
-              <div>
-                <script src="js-yaml.min.js"></script>
-                <script type="text/javascript">
-                 var doc = jsyaml.load({{ yaml_config }});
-                </script>
-              </div>
-            </section>
-        </form>
+  {% csrf_token %}
+  <div class="wrapper">
+   <section>
+    <form action="" id="wizard" method="post">
+    <pre id="yaml"  class="wrapper">
+      {{ yaml_config }}
+    </pre>
+    <div class="form-row">
+      <div class="form-holder">
+        <i class="zmdi zmdi-arrow-right"></i>
+        <button name="next-step" type="submit" class="form-control">Download</button>
     </div>
+  </section>
+</form>
+  </div>
 </body>
 </html>
