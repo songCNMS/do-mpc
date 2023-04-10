@@ -16,24 +16,22 @@
 
 		<!-- STYLE CSS -->
 		<link rel="stylesheet" href="{% static 'css/style.css' %}">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.js"></script>
 	</head>
 <body>
   {% csrf_token %}
   <div class="wrapper">
    <section>
-    <form action="" id="wizard" method="post">
-    <pre id="yaml"  class="wrapper">
+    <pre>
       {{ yaml_config }}
     </pre>
+    <form action="" id="wizard" method="post">
     <div class="form-row">
       <div class="form-holder">
         <i class="zmdi zmdi-arrow-right"></i>
         <button name="next-step" type="submit" class="form-control">Download</button>
     </div>
+    </form>
   </section>
-</form>
   </div>
 </body>
 </html>
