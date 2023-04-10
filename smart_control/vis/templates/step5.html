@@ -1,0 +1,112 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+    <div class="wrapper">
+        <form action="" id="wizard" method="post">
+            {% csrf_token %}
+            <section>
+                <h3>Estimator Specification</h3>
+                <h3>Set type of the estimator</h3>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-arrow-split"></i>
+                        <select name="estimator type" id="estimator type" class="form-control">
+                            {% if est_type == "StateFeedBack" %}
+                                <option value="StateFeedBack" selected>StateFeedBack</option>
+                            {% else %}
+                                <option value="StateFeedBack">StateFeedBack</option>
+                            {% endif %}
+                            {% if est_type == "EKH" %}
+                                <option value="EKH" selected>EKH</option>
+                            {% else %}
+                                <option value="EKH">EKH</option>
+                            {% endif %}
+                            {% if est_type == "MHE" %}
+                                <option value="MHE" selected>MHE</option>
+                            {% else %}
+                                <option value="MHE">MHE</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-4-square"></i>
+                        <input type="text" name="num estimator parameters" class="form-control" placeholder="Num. estimator Parameters" value="{{ num_estimator_parameters }}">
+                    </div>
+                    <div class="form-holder password">
+                        <i class="zmdi zmdi-arrow-right"></i>
+                        <button type="submit" name="confirm" class="form-control">Confirm</button>
+                    </div>
+                </div>
+                <h3>Define estimator parameters</h3>
+                {% for para in estimator_parameters %}
+                  <div class="form-row">
+                      <div class="form-holder">
+                          <i class="zmdi zmdi-edit"></i>
+                          <input type="text" name="estimator parameter {{ para.parameter_idx }} name" class="form-control" placeholder="estimator parameter {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                      </div>
+                      <div class="form-holder">
+                        <i class="zmdi zmdi-edit"></i>
+                        <input type="text" name="estimator parameter {{ para.parameter_idx }} value" class="form-control" placeholder="estimator parameter {{ para.parameter_idx }}" value="{{ para.parameter_value }}">
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-arrow-split"></i>
+                        {% comment %} <label for="model type">Model Type:</label> {% endcomment %}
+                        <select name="estimator parameter {{ para.parameter_idx }} type" id="estimator parameter {{ para.parameter_idx }} type" class="form-control">
+                            {% if para.parameter_type == "int" %}
+                                <option value="int" selected>Int</option>
+                            {% else %}
+                                <option value="int">Int</option>
+                            {% endif %}
+                            {% if para.parameter_type == "bool" %}
+                                <option value="bool" selected>Boolean</option>
+                            {% else %}
+                                <option value="bool">Boolean</option>
+                            {% endif %}
+                            {% if para.parameter_type == "str" %}
+                                <option value="str" selected>String</option>
+                            {% else %}
+                                <option value="str">String</option>
+                            {% endif %}
+                            {% if para.parameter_type == "float" %}
+                                <option value="float" selected>Float</option>
+                            {% else %}
+                                <option value="float">Float</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                  </div>
+                {% empty %}
+                 <h3>No estimator parameters</h3>
+                {% endfor %}    
+                
+                
+             <div class="form-row">
+                <div class="form-holder">
+                  <i class="zmdi zmdi-edit"></i>
+                  <a href="/step4/">Previous Step</a>
+              </div>
+                <div class="form-holder">
+                  <i class="zmdi zmdi-arrow-right"></i>
+                  <button name="next-step" type="submit" class="form-control">Next</button>
+              </div>
+            </section>
+        </form>
+    </div>
+</body>
+</html>

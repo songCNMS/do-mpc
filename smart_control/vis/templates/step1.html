@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+    <div class="wrapper">
+        <form action="" id="wizard" method="post">
+            {% csrf_token %}
+            <h4></h4>
+            <section>
+                <h3>Model Specification</h3>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-edit"></i>
+                        <input type="text" name="model name", class="form-control" placeholder="model name" value="{{ model_name }}">
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-arrow-split"></i>
+                        {% comment %} <label for="model type">Model Type:</label> {% endcomment %}
+                        <select name="model type" id="model type" class="form-control" value="{{ model_type }}">
+                            <option value="continuous">Continuous</option>
+                            <option value="discrete">Discrete</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-1-square"></i>
+                        <input type="text" name="constants" class="form-control" placeholder="Num. Constants" value="{{ num_constants }}">
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-2-square"></i>
+                        <input type="text" name="state variables" class="form-control" placeholder="Num. State Variables" value="{{ num_state_variables }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-2-square"></i>
+                        <input type="text" name="user defined parameters" class="form-control" placeholder="Num. User Defined Parameters" value="{{ num_parameters }}">
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-3-square"></i>
+                        <input type="text" name="control variables" class="form-control" placeholder="Num. Control Variables" value="{{ num_controls }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-4-square"></i>
+                        <input type="text" name="auxiliary variables" class="form-control" placeholder="Num. Auxiliary Variables" value="{{ num_aux_variables }}">
+                    </div>
+                    <div class="form-holder password">
+                        <i class="zmdi zmdi-arrow-right"></i>
+                        <button type="submit" class="form-control">Next</button>
+                    </div>
+                </div>
+                
+            </section>
+        </form>
+    </div>
+
+</form>
+</body>
+</html>

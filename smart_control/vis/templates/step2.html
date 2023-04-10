@@ -1,0 +1,161 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+  <div class="myBox">
+  <div class="wrapper">
+    <form action="" id="wizard" method="post">
+        {% csrf_token %}
+        <h4></h4>
+        <section>
+            <h3>Define constants in the model</h3>
+            {% for para in constants %}
+              <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="constant {{ para.parameter_idx }} name" class="form-control" placeholder="constant {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="constant {{ para.parameter_idx }} value" class="form-control" placeholder="constant {{ para.parameter_idx }} value" value="{{ para.parameter_value }}">
+                </div>
+              </div>
+            {% empty %}
+             <h3>No constant</h3>
+            {% endfor %}
+
+            <h3>Define control variables in the model</h3>
+            {% for para in controls %}
+              <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="control {{ para.parameter_idx }} name" class="form-control" placeholder="control {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="control {{ para.parameter_idx }} shape" class="form-control" placeholder="control {{ para.parameter_idx }} shape (1,), (1,1) ..." value="{{ para.parameter_shape }}">
+                </div>
+              </div>
+            {% empty %}
+             <h3>No control variables</h3>
+            {% endfor %}
+
+            <h3>Define state variables in the model</h3>
+            {% for para in state_variables %}
+              <h2>Define {{ para.parameter_idx }}-th state variable</h2>
+              <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="state variable {{ para.parameter_idx }} name" class="form-control" placeholder="state variable {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state variable {{ para.parameter_idx }} init value" class="form-control" placeholder="state variable {{ para.parameter_idx }} init value" value="{{ para.parameter_init_value }}">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state variable {{ para.parameter_idx }} lower bound" class="form-control" placeholder="state variable {{ para.parameter_idx }} lower bound" value="{{ para.parameter_lower }}">
+                </div>
+                <div class="form-holder">
+                  <i class="zmdi zmdi-edit"></i>
+                  <input type="text" name="state variable {{ para.parameter_idx }} upper bound" class="form-control" placeholder="state {{ para.parameter_idx }} upper bound" value="{{ para.parameter_upper }}">
+               </div>
+               <div class="form-holder">
+                <i class="zmdi zmdi-edit"></i>
+                {% if para.parameter_soft == "on" %}
+                <input type="checkbox" id="state {{ para.parameter_idx }} soft" name="state variable {{ para.parameter_idx }} soft" checked>
+                {% else %}
+                <input type="checkbox" id="state {{ para.parameter_idx }} soft" name="state variable {{ para.parameter_idx }} soft">
+                {% endif %}
+                <label class="form-control" for="state {{ para.parameter_idx }} soft">Soft</label>
+             </div>
+              </div>
+              <div class="form-row">
+                <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state variable {{ para.parameter_idx }} shape" class="form-control" placeholder="state variable {{ para.parameter_idx }} shape" value="{{ para.parameter_shape }}">
+                </div>
+                <div class="form-holder">
+                  <i class="zmdi zmdi-edit"></i>
+                  <input type="text" name="state variable {{ para.parameter_idx }} scaling" class="form-control" placeholder="state variable {{ para.parameter_idx }} scaling" value="{{ para.parameter_scaling }}">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-holder">
+                <i class="zmdi zmdi-edit"></i>
+                <input type="text" name="state variable {{ para.parameter_idx }} RHS" class="form-control" placeholder="state variable {{ para.parameter_idx }} RHS" value="{{ para.parameter_rhs }}">
+             </div>
+
+            {% empty %}
+             <h3>No state variables</h3>
+            {% endfor %}
+
+          </div>
+
+          <h3>Define user defined parameters in the model</h3>
+            {% for para in parameters %}
+              <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="parameter {{ para.parameter_idx }} name" class="form-control" placeholder="parameter {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="parameter {{ para.parameter_idx }} values" class="form-control" placeholder="parameter {{ para.parameter_idx }} values" value="{{ para.parameter_values }}">
+                </div>
+              </div>
+            {% empty %}
+             <h3>No user defined parameters</h3>
+            {% endfor %}
+
+            <h3>Define auxiliary variables in the model</h3>
+            {% for para in aux_variables %}
+              <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="auxiliary variable {{ para.parameter_idx }} name" class="form-control" placeholder="auxiliary variable {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="auxiliary variable {{ para.parameter_idx }} definition" class="form-control" placeholder="auxiliary variable {{ para.parameter_idx }} definition" value="{{ para.parameter_expr }}">
+                </div>
+              </div>
+            {% empty %}
+             <h3>No user defined parameters</h3>
+            {% endfor %}
+
+          <div class="form-row">
+            <div class="form-holder">
+              <i class="zmdi zmdi-edit"></i>
+              <a href="/step1/">Previous Step</a>
+            </div>
+            <div class="form-holder">
+              <i class="zmdi zmdi-arrow-right"></i>
+              <button type="submit" class="form-control">Next</button>
+            </div>
+         </div>
+        </section>
+    </form>
+</div>
+
+</form>
+</div>
+</body>
+</html>

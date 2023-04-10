@@ -1,0 +1,88 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+    <div class="wrapper">
+        <form action="" id="wizard" method="post">
+            {% csrf_token %}
+            <section>
+                <h3>Define Reward Function</h3>
+                <h3>Define State Step Reward</h3>
+            {% for para in state_step_rewards %}
+                <h4>{{para.parameter_type}} {{ para.parameter_name }}</h4>
+                <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <label class="form-control" for="{{ para.parameter_name }} expr">{{ para.parameter_name }}</label>
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state step {{ para.parameter_name }} expr" class="form-control" placeholder="{{ para.parameter_name }}" value="{{ para.parameter_expr }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state step {{ para.parameter_name }} coef" class="form-control" placeholder="0.0" value="{{ para.parameter_coef }}">
+                  </div>
+                </div>
+            {% endfor %}
+            <h3>Define State Terminal Reward</h3>
+            {% for para in state_terminal_rewards %}
+                <h4>{{para.parameter_type}} {{ para.parameter_name }}</h4>
+                <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <label class="form-control" for="{{ para.parameter_name }} expr">{{ para.parameter_name }}</label>
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state terminal {{ para.parameter_name }} expr" class="form-control" placeholder="{{ para.parameter_name }}" value="{{ para.parameter_expr }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="state terminal {{ para.parameter_name }} coef" class="form-control" placeholder="0.0" value="{{ para.parameter_coef }}">
+                  </div>
+                </div>
+            {% endfor %}
+            <h3>Define Reward over Control Signals</h3>
+            {% for para in input_rewards %}
+                <h4>{{para.parameter_type}} {{ para.parameter_name }}</h4>
+                <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <label class="form-control" for="{{ para.parameter_name }} expr">{{ para.parameter_name }}</label>
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="control {{ para.parameter_name }} coef" class="form-control" placeholder="0.0" value="{{ para.parameter_coef }}">
+                  </div>
+                </div>
+            {% endfor %}
+             <div class="form-row">
+                <div class="form-holder">
+                  <i class="zmdi zmdi-edit"></i>
+                  <a href="/step5/">Previous Step</a>
+              </div>
+                <div class="form-holder">
+                  <i class="zmdi zmdi-arrow-right"></i>
+                  <button name="next-step" type="submit" class="form-control">Download</button>
+              </div>
+            </section>
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+    <div class="wrapper">
+        <form action="" id="wizard" method="post">
+            {% csrf_token %}
+            <section>
+              <div>
+                <script src="js-yaml.min.js"></script>
+                <script type="text/javascript">
+                 var doc = jsyaml.load({{ yaml_config }});
+                </script>
+              </div>
+            </section>
+        </form>
+    </div>
+</body>
+</html>

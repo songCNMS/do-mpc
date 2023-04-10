@@ -1,0 +1,121 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta charset="utf-8">
+		<title>A wizard to optimize a control problem</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="author" content="colorlib.com">
+
+		<!-- MATERIAL DESIGN ICONIC FONT -->
+		<link rel="stylesheet" href="{% static 'fonts/material-design-iconic-font/css/material-design-iconic-font.css' %}">
+
+		<!-- DATE-PICKER -->
+		<link rel="stylesheet" href="{% static 'vendor/date-picker/css/datepicker.min.css' %}">
+
+		<!-- STYLE CSS -->
+		<link rel="stylesheet" href="{% static 'css/style.css' %}">
+	</head>
+<body>
+    <div class="wrapper">
+        <form action="" id="wizard" method="post">
+            {% csrf_token %}
+            <section>
+                <h3>MPC Controller Specification</h3>
+                <h3>Set the number of MPC parameters</h3>
+                <div class="form-row">
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-n-4-square"></i>
+                        <input type="text" name="num MPC parameters" class="form-control" placeholder="Num. MPC Parameters" value="{{ num_MPC_parameters }}">
+                    </div>
+                    <div class="form-holder password">
+                        <i class="zmdi zmdi-arrow-right"></i>
+                        <button type="submit" name="confirm" class="form-control">Confirm</button>
+                    </div>
+                </div>
+                <h3>Define MPC parameters</h3>
+                {% for para in MPC_parameters %}
+                  <div class="form-row">
+                      <div class="form-holder">
+                          <i class="zmdi zmdi-edit"></i>
+                          <input type="text" name="MPC parameter {{ para.parameter_idx }} name" class="form-control" placeholder="MPC parameter {{ para.parameter_idx }} name" value="{{ para.parameter_name }}">
+                      </div>
+                      <div class="form-holder">
+                        <i class="zmdi zmdi-edit"></i>
+                        <input type="text" name="MPC parameter {{ para.parameter_idx }} value" class="form-control" placeholder="MPC parameter {{ para.parameter_idx }}" value="{{ para.parameter_value }}">
+                    </div>
+                    <div class="form-holder">
+                        <i class="zmdi zmdi-arrow-split"></i>
+                        {% comment %} <label for="model type">Model Type:</label> {% endcomment %}
+                        <select name="MPC parameter {{ para.parameter_idx }} type" id="MPC parameter {{ para.parameter_idx }} type" class="form-control">
+                            {% if para.parameter_type == "int" %}
+                                <option value="int" selected>Int</option>
+                            {% else %}
+                                <option value="int">Int</option>
+                            {% endif %}
+                            {% if para.parameter_type == "bool" %}
+                                <option value="bool" selected>Boolean</option>
+                            {% else %}
+                                <option value="bool">Boolean</option>
+                            {% endif %}
+                            {% if para.parameter_type == "str" %}
+                                <option value="str" selected>String</option>
+                            {% else %}
+                                <option value="str">String</option>
+                            {% endif %}
+                            {% if para.parameter_type == "float" %}
+                                <option value="float" selected>Float</option>
+                            {% else %}
+                                <option value="float">Float</option>
+                            {% endif %}
+                        </select>
+                    </div>
+                  </div>
+                {% empty %}
+                 <h3>No MPC parameters</h3>
+                {% endfor %}    
+                
+                
+                <h3>MPC configs</h3>
+                {% for para in MPC_configs %}
+                <h4>{{para.parameter_type}} {{ para.parameter_name }}</h4>
+                <div class="form-row">
+                  <div class="form-holder">
+                      <i class="zmdi zmdi-edit"></i>
+                      <input type="text" name="{{ para.parameter_name }} lower bound" class="form-control" placeholder="{{ para.parameter_name }} lower bound" value="{{ para.parameter_lower }}">
+                  </div>
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="{{ para.parameter_name }} upper bound" class="form-control" placeholder="{{ para.parameter_name }} upper bound" value="{{ para.parameter_upper }}">
+                  </div>
+                  <div class="form-holder">
+                   <i class="zmdi zmdi-edit"></i>
+                   {% if para.parameter_soft == "on" %}
+                   <input type="checkbox" id="{{ para.parameter_name }} soft" name="{{ para.parameter_name }} soft" checked>
+                   {% else %}
+                   <input type="checkbox" id="{{ para.parameter_name }} soft" name="{{ para.parameter_name }} soft">
+                   {% endif %}
+                   <label class="form-control" for="{{ para }} soft">Soft</label>
+                </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-holder">
+                    <i class="zmdi zmdi-edit"></i>
+                    <input type="text" name="{{ para.parameter_name }} scaling" class="form-control" placeholder="{{ para.parameter_name }} scaling"  value="{{ para.parameter_scaling }}">
+                </div>
+            </div>
+            {% endfor %}
+             <div class="form-row">
+                <div class="form-holder">
+                  <i class="zmdi zmdi-edit"></i>
+                  <a href="/step3/">Previous Step</a>
+              </div>
+                <div class="form-holder">
+                  <i class="zmdi zmdi-arrow-right"></i>
+                  <button name="next-step" type="submit" class="form-control">Next</button>
+              </div>
+            </section>
+        </form>
+    </div>
+</body>
+</html>
